@@ -1,0 +1,10 @@
+# 单测专用：H2 代替本机 PostgreSQL；须保留与主配置相同的 spring.application（含 module-code），避免覆盖后丢失
+spring:
+  application:
+    name: peach-common-service
+    module-code: SVC1
+  datasource:
+    url: jdbc:h2:mem:peach_common_test;MODE=PostgreSQL;DATABASE_TO_LOWER=true;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver

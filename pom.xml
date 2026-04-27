@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 创作日期：2026-04-22，作者：leiyangjun — 基础业务服务骨架，版本由 peach-dependencies BOM 统一导入；不向 Maven Central 发布 -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.2</version>
+		<relativePath />
+	</parent>
+
+	<groupId>org.peach.common</groupId>
+	<artifactId>peach-common-service</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<name>peach-common-service</name>
+	<description>Peach 基础服务（菜单 / 用户 / 角色 / 权限等 API 的承载工程，当前仅骨架）</description>
+
+	<properties>
+		<java.version>21</java.version>
+		<!-- 与 sibling 工程 peach-dependencies 版本对齐 -->
+		<peach-dependencies.version>0.0.1-SNAPSHOT</peach-dependencies.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.peach.pom</groupId>
+				<artifactId>peach-dependencies</artifactId>
+				<version>${peach-dependencies.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<!-- 本地已 install 的统一 Starter（MVC / ApiResult / MyBatis 等），版本与 sibling 工程一致 -->
+		<dependency>
+			<groupId>org.peach.common</groupId>
+			<artifactId>peach-common-start</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<!-- 生产/本地默认连 PostgreSQL；驱动由 Spring Boot 父 POM 管理版本 -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+</project>
