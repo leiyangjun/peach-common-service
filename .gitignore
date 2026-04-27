@@ -1,0 +1,16 @@
+/target/
+/.classpath
+/.project
+/.settings/
+*.iml
+/.idea/
+*.log
+/.apt_generated/
+/.factorypath
+
+# Maven / 本地工具
+.mvn/wrapper/maven-wrapper.jar
+cp.txt
+*.class
+hs_err_pid*.log
+replay_pid*.log

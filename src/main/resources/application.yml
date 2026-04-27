@@ -1,0 +1,47 @@
+# 创作日期：2026-04-22，作者：leiyangjun — 基础服务默认配置（可按环境拆分 application-*.yml）
+server:
+  port: 8083
+
+spring:
+  application:
+    name: peach-common-service
+    # peach-common-start：ApiResult 等业务码前缀必填（四位模块编码）
+    module-code: COMM
+
+  # ==============================
+  # 方案A：关闭读写分离（默认）
+  # ==============================
+  # 关闭时仅使用 spring.datasource 单数据源，适合本地开发与简单部署。
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    rw:
+      enabled: false
+      write:
+        url: ${DB_WRITE_URL:jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public}
+        username: ${DB_WRITE_USERNAME:postgres}
+        password: ${DB_WRITE_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+      read:
+        url: ${DB_READ_URL:jdbc:postgresql://192.168.99.101:5432/peach_common?currentSchema=public}
+        username: ${DB_READ_USERNAME:postgres}
+        password: ${DB_READ_PASSWORD:postgres}
+        driver-class-name: org.postgresql.Driver
+
+# ==============================
+# 方案B：开启读写分离
+# ==============================
+# 开启后由 peach-common-start 的 ReadWriteDataSourceAutoConfiguration 接管 dataSource：
+# - 写事务 / 非只读事务 -> 写库（write）
+# - @Transactional(readOnly = true) -> 读库（read）
+# 注意：
+# 1) 开启后建议不再依赖 spring.datasource 的 url/username/password 作为主配置来源，统一使用 spring.datasource.rw.*
+# 2) 若 read 未单独填写，则默认回退使用 write 配置（便于先灰度启用路由再接入从库）
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
