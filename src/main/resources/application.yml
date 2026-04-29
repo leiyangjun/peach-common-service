@@ -1,6 +1,10 @@
 # 创作日期：2026-04-22，作者：leiyangjun — 基础服务默认配置（可按环境拆分 application-*.yml）
 server:
   port: 8083
+  # 经网关按 /{serviceId}/** 访问时，识别 X-Forwarded-Prefix，使 SpringDoc/Swagger 生成带前缀的文档 URL
+  forward-headers-strategy: framework
+  # 可选：注册到 Nacos 元数据 peach.service-description，网关 Swagger 门户展示；例如：菜单管理、人员管理
+  # service-description: 基础业务与公共能力
 
 spring:
   application:
@@ -29,6 +33,14 @@ spring:
         username: ${DB_READ_USERNAME:postgres}
         password: ${DB_READ_PASSWORD:postgres}
         driver-class-name: org.postgresql.Driver
+
+peach:
+  doc:
+    portal-link:
+      # 下游文档追加「回到首页」链接，跳回网关门户页（由 peach-common-start 自动注入到 OpenAPI 描述）。
+      enabled: true
+      portal-url: ${PEACH_DOC_PORTAL_URL:http://127.0.0.1:8090/index.html}
+      link-text: 回到首页
 
 # ==============================
 # 方案B：开启读写分离

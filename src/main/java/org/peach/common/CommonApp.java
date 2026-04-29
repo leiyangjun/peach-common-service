@@ -21,7 +21,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class CommonApp {
 
 	public static void main(String[] args) {
-		SpringApplication.run(CommonApp.class, args);
-		//GeneratorUtil.generateAll("jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public", "postgres", "postgres", "org.postgresql.Driver", "sys_user");
+		//SpringApplication.run(CommonApp.class, args);
+		GeneratorUtil.generateAll(
+				"jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public",
+				"postgres",
+				"postgres",
+				"org.postgresql.Driver",
+				"cmn_user",
+				"cmn_role",
+				"cmn_menu",
+				"cmn_role_menu",
+				"cmn_menu_button",
+				"cmn_button_api",
+				"cmn_role_button");
 	}
 }
