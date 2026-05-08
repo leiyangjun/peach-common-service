@@ -8,4 +8,3 @@ import org.peach.common.mybatis.service.BaseInterfaceService;
  */
 public interface MenuButtonService extends BaseInterfaceService<MenuButtonVO> {
 }
-

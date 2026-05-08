@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.cmn_user (
     id                 BIGINT         NOT NULL,
     subject_type       VARCHAR(16)    NOT NULL DEFAULT 'INTERNAL',
     username           VARCHAR(64)             NULL,
-    password           VARCHAR(128)            NULL,
+    password           VARCHAR(128)            NULL, -- BCrypt 须 ≥60 字符；勿缩短此列
     nickname           VARCHAR(64)             NULL,
     real_name          VARCHAR(64)             NULL,
     mobile             VARCHAR(20)             NULL,
@@ -69,7 +69,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_open_union ON public.cmn_user (ope
 CREATE INDEX IF NOT EXISTS idx_cmn_user_subject_type ON public.cmn_user (subject_type);
 CREATE INDEX IF NOT EXISTS idx_cmn_user_valid ON public.cmn_user (valid);
 
--- 演示账号：admin / 123456（BCrypt）；生产请删除或改密
+-- 演示账号：用户名 admin，密码 123456（BCrypt，非明文 admin）；生产请删除或改密
 INSERT INTO public.cmn_user (
     id, subject_type, username, password, nickname, register_client, valid
 ) VALUES (
@@ -346,6 +346,18 @@ INSERT INTO public.cmn_menu (
     'User',
     11,
     1
+),
+(
+    1970000000000000203,
+    0,
+    'SYS_MENU_MGMT',
+    '菜单管理',
+    'MENU',
+    '/system/menu',
+    'views/system/MenuView.vue',
+    'Menu',
+    15,
+    1
 )
 ON CONFLICT (id) DO NOTHING;
 
@@ -365,6 +377,13 @@ INSERT INTO public.cmn_role_menu (
     'RM_ROLE_ADMIN_SYS_USER',
     1970000000000000101,
     1970000000000000202,
+    1
+),
+(
+    1970000000000000303,
+    'RM_ROLE_ADMIN_SYS_MENU_MGMT',
+    1970000000000000101,
+    1970000000000000203,
     1
 )
 ON CONFLICT (id) DO NOTHING;

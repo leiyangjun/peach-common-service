@@ -18,4 +18,3 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 		super(mapper, Role.class, RoleVO.class);
 	}
 }
-

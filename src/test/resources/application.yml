@@ -3,6 +3,14 @@ spring:
   application:
     name: peach-common-service
     module-code: SVC1
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+        register-enabled: false
+  autoconfigure:
+    exclude:
+      - com.alibaba.cloud.nacos.discovery.NacosDiscoveryAutoConfiguration
   datasource:
     url: jdbc:h2:mem:peach_common_test;MODE=PostgreSQL;DATABASE_TO_LOWER=true;DB_CLOSE_DELAY=-1
     username: sa

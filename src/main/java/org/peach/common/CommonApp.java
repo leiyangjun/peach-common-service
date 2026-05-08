@@ -1,8 +1,8 @@
 package org.peach.common;
 
-import org.peach.common.mybatis.generator.GeneratorUtil;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * Peach 基础服务启动入口。
@@ -18,21 +18,22 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author leiyangjun
  */
 @SpringBootApplication
+@EnableDiscoveryClient
 public class CommonApp {
 
 	public static void main(String[] args) {
-		//SpringApplication.run(CommonApp.class, args);
-		GeneratorUtil.generateAll(
-				"jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public",
-				"postgres",
-				"postgres",
-				"org.postgresql.Driver",
-				"cmn_user",
-				"cmn_role",
-				"cmn_menu",
-				"cmn_role_menu",
-				"cmn_menu_button",
-				"cmn_button_api",
-				"cmn_role_button");
+		SpringApplication.run(CommonApp.class, args);
+//		GeneratorUtil.generateAll(
+//				"jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public",
+//				"postgres",
+//				"postgres",
+//				"org.postgresql.Driver",
+//				"cmn_user",
+//				"cmn_role",
+//				"cmn_menu",
+//				"cmn_role_menu",
+//				"cmn_menu_button",
+//				"cmn_button_api",
+//				"cmn_role_button");
 	}
 }

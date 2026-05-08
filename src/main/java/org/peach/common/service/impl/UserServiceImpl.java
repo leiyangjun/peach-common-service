@@ -18,4 +18,3 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 		super(mapper, User.class, UserVO.class);
 	}
 }
-

@@ -50,4 +50,3 @@ public class MenuButtonVO implements Serializable {
 	@Schema(description = "最后更新时间")
 	private Date editTime;
 }
-

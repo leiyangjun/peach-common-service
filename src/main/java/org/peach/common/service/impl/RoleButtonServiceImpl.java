@@ -18,4 +18,3 @@ public class RoleButtonServiceImpl extends BaseAbstractService<RoleButtonMapper,
 		super(mapper, RoleButton.class, RoleButtonVO.class);
 	}
 }
-

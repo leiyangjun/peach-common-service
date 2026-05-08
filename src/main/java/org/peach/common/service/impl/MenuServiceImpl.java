@@ -18,4 +18,3 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		super(mapper, Menu.class, MenuVO.class);
 	}
 }
-

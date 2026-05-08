@@ -14,11 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/cmn/role/menu")
-@Tag(name = "CmnRoleMenu接口", description = "依据代码生成，可改")
+@Tag(name = "RoleMenu接口", description = "依据代码生成，可改")
 public class RoleMenuController extends BaseController<RoleMenuVO, RoleMenuServiceImpl> {
 
 	public RoleMenuController(RoleMenuServiceImpl service) {
 		super(service);
 	}
 }
-

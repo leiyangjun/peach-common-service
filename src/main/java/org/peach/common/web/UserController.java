@@ -14,11 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/cmn/user")
-@Tag(name = "CmnUser接口", description = "依据代码生成，可改")
+@Tag(name = "User接口", description = "依据代码生成，可改")
 public class UserController extends BaseController<UserVO, UserServiceImpl> {
 
 	public UserController(UserServiceImpl service) {
 		super(service);
 	}
 }
-

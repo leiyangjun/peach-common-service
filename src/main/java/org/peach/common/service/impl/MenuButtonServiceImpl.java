@@ -18,4 +18,3 @@ public class MenuButtonServiceImpl extends BaseAbstractService<MenuButtonMapper,
 		super(mapper, MenuButton.class, MenuButtonVO.class);
 	}
 }
-

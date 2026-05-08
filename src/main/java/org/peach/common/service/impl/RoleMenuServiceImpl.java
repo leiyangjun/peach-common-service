@@ -18,4 +18,3 @@ public class RoleMenuServiceImpl extends BaseAbstractService<RoleMenuMapper, Rol
 		super(mapper, RoleMenu.class, RoleMenuVO.class);
 	}
 }
-

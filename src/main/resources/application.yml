@@ -3,14 +3,28 @@ server:
   port: 8083
   # 经网关按 /{serviceId}/** 访问时，识别 X-Forwarded-Prefix，使 SpringDoc/Swagger 生成带前缀的文档 URL
   forward-headers-strategy: framework
-  # 可选：注册到 Nacos 元数据 peach.service-description，网关 Swagger 门户展示；例如：菜单管理、人员管理
-  # service-description: 基础业务与公共能力
+  # 写入 Nacos 实例元数据键 server.description，供网关 Swagger 门户展示
+  description: 菜单，权限用户等管理3
 
 spring:
   application:
     name: peach-common-service
     # peach-common-start：ApiResult 等业务码前缀必填（四位模块编码）
     module-code: COMM
+  # 默认本地启动使用 dev；生产等环境请设置环境变量 SPRING_PROFILES_ACTIVE（与 peach-auth-service 一致）
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:192.168.99.100:8848}
+        username: ${NACOS_USERNAME:nacos}
+        password: ${NACOS_PASSWORD:nacos}
+        namespace: ${NACOS_NAMESPACE:dev}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        ip: ${NACOS_REGISTER_IP:}
+        port: ${NACOS_REGISTER_PORT:${server.port}}
+        fail-fast: false
 
   # ==============================
   # 方案A：关闭读写分离（默认）
@@ -33,14 +47,6 @@ spring:
         username: ${DB_READ_USERNAME:postgres}
         password: ${DB_READ_PASSWORD:postgres}
         driver-class-name: org.postgresql.Driver
-
-peach:
-  doc:
-    portal-link:
-      # 下游文档追加「回到首页」链接，跳回网关门户页（由 peach-common-start 自动注入到 OpenAPI 描述）。
-      enabled: true
-      portal-url: ${PEACH_DOC_PORTAL_URL:http://127.0.0.1:8090/index.html}
-      link-text: 回到首页
 
 # ==============================
 # 方案B：开启读写分离

@@ -18,4 +18,3 @@ public class ButtonApiServiceImpl extends BaseAbstractService<ButtonApiMapper, B
 		super(mapper, ButtonApi.class, ButtonApiVO.class);
 	}
 }
-

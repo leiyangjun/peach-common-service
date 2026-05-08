@@ -14,11 +14,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @RestController
 @RequestMapping("/api/cmn/button/api")
-@Tag(name = "CmnButtonApi接口", description = "依据代码生成，可改")
+@Tag(name = "ButtonApi接口", description = "依据代码生成，可改")
 public class ButtonApiController extends BaseController<ButtonApiVO, ButtonApiServiceImpl> {
 
 	public ButtonApiController(ButtonApiServiceImpl service) {
 		super(service);
 	}
 }
-
