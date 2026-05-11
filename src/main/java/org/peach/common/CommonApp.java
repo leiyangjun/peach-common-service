@@ -1,8 +1,7 @@
 package org.peach.common;
 
+import org.peach.common.mvc.annotation.start.PeachCloud;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * Peach 基础服务启动入口。
@@ -17,8 +16,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
  *
  * @author leiyangjun
  */
-@SpringBootApplication
-@EnableDiscoveryClient
+@PeachCloud
 public class CommonApp {
 
 	public static void main(String[] args) {

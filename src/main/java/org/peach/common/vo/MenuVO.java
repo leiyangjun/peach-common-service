@@ -4,6 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+
+import org.peach.common.utils.annotation.TreeId;
+import org.peach.common.utils.annotation.TreeParentId;
+import org.peach.common.utils.annotation.TreeSortField;
+
 import lombok.Data;
 
 /** 依据 {@link org.peach.common.entity.Menu} 生成的对外 VO，不同步时手工改。
@@ -14,9 +20,11 @@ public class MenuVO implements Serializable {
 	@Serial
 	private static final long serialVersionUID = 1L;
 
+	@TreeId
 	@Schema(description = "主键：雪花 64 位，对应 Java long")
 	private Long id;
 
+	@TreeParentId
 	@Schema(description = "父菜单 ID：根节点可为 0 或 NULL")
 	private Long parentId;
 
@@ -38,6 +46,7 @@ public class MenuVO implements Serializable {
 	@Schema(description = "菜单图标")
 	private String icon;
 
+	@TreeSortField
 	@Schema(description = "同级排序号，越小越靠前")
 	private Integer orderNo;
 
@@ -58,4 +67,8 @@ public class MenuVO implements Serializable {
 
 	@Schema(description = "最后更新时间")
 	private Date editTime;
+
+	/** 菜单树子节点；列表/详情无树语义时可不传或为 null */
+	@Schema(description = "子菜单列表（仅树接口填充）")
+	private List<MenuVO> children;
 }

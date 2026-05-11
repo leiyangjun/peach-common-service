@@ -6,22 +6,22 @@
 SET client_encoding = 'UTF8';
 SET search_path = public;
 
--- 主体类型：系统侧账号（后台/员工）与 C 端账号分域；开放 API / OAuth 可通过 open_union_id 与业务扩展表关联
+-- 用户类型：system=系统侧（后台/员工），app=应用端（C 端等）；证件字段可选填，证件号码允许为空
 CREATE TABLE IF NOT EXISTS public.cmn_user (
     id                 BIGINT         NOT NULL,
-    subject_type       VARCHAR(16)    NOT NULL DEFAULT 'INTERNAL',
+    user_type          VARCHAR(16)    NOT NULL DEFAULT 'app',
     username           VARCHAR(64)             NULL,
     password           VARCHAR(128)            NULL, -- BCrypt 须 ≥60 字符；勿缩短此列
     nickname           VARCHAR(64)             NULL,
     real_name          VARCHAR(64)             NULL,
     mobile             VARCHAR(20)             NULL,
     email              VARCHAR(128)            NULL,
-    avatar_url         VARCHAR(512)            NULL,
+    avatar             VARCHAR(512)            NULL,
     gender             SMALLINT                NULL DEFAULT 0,
-    register_client    VARCHAR(32)             NULL,
+    cert_type          VARCHAR(32)             NULL,
+    cert_no            VARCHAR(128)            NULL,
     last_login_time    TIMESTAMPTZ(3)          NULL,
     last_login_client  VARCHAR(32)             NULL,
-    open_union_id      VARCHAR(128)            NULL,
     remark             VARCHAR(500)            NULL,
     valid              SMALLINT       NOT NULL DEFAULT 1,
     creator            BIGINT                  NULL,
@@ -30,29 +30,29 @@ CREATE TABLE IF NOT EXISTS public.cmn_user (
     edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_cmn_user PRIMARY KEY (id),
     CONSTRAINT ck_cmn_user_valid CHECK (valid IN (0, 1)),
-    CONSTRAINT ck_cmn_user_subject_type CHECK (subject_type IN ('INTERNAL', 'CUSTOMER')),
+    CONSTRAINT ck_cmn_user_user_type CHECK (user_type IN ('system', 'app')),
     CONSTRAINT ck_cmn_user_gender CHECK (gender IS NULL OR gender IN (0, 1, 2)),
-    CONSTRAINT ck_cmn_user_internal_login CHECK (
-        subject_type <> 'INTERNAL'
+    CONSTRAINT ck_cmn_user_system_login CHECK (
+        user_type <> 'system'
         OR (username IS NOT NULL AND btrim(username) <> '')
     )
 );
 
-COMMENT ON TABLE public.cmn_user IS '用户：区分系统侧（INTERNAL）与 C 端（CUSTOMER）；终端与开放标识字段便于审计与对接 OAuth/开放 API';
+COMMENT ON TABLE public.cmn_user IS '用户：按 user_type 区分系统侧与 App 端；证件类型/号码用于实名展示（号码可空）';
 COMMENT ON COLUMN public.cmn_user.id IS '主键：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_user.subject_type IS '主体：INTERNAL=系统侧（运营/员工等），CUSTOMER=C 端消费者';
-COMMENT ON COLUMN public.cmn_user.username IS '登录名；系统侧必填（由约束保证），C 端可空（手机/三方为主）';
+COMMENT ON COLUMN public.cmn_user.user_type IS '用户类型：system=系统侧，app=应用端（与 JWT Claim user_type 一致）';
+COMMENT ON COLUMN public.cmn_user.username IS '登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）';
 COMMENT ON COLUMN public.cmn_user.password IS '密码摘要；免密或纯三方登录可为空';
 COMMENT ON COLUMN public.cmn_user.nickname IS '昵称';
 COMMENT ON COLUMN public.cmn_user.real_name IS '真实姓名或对内展示名';
 COMMENT ON COLUMN public.cmn_user.mobile IS '手机号';
 COMMENT ON COLUMN public.cmn_user.email IS '邮箱';
-COMMENT ON COLUMN public.cmn_user.avatar_url IS '头像地址';
+COMMENT ON COLUMN public.cmn_user.avatar IS '头像地址或对象存储键';
 COMMENT ON COLUMN public.cmn_user.gender IS '性别：0 未知，1 男，2 女';
-COMMENT ON COLUMN public.cmn_user.register_client IS '首次注册终端：如 ADMIN_WEB、MINI_APP、APP、OPEN_API（与网关/客户端约定枚举）';
+COMMENT ON COLUMN public.cmn_user.cert_type IS '证件类型编码（如 ID_CARD），与业务字典一致；可空';
+COMMENT ON COLUMN public.cmn_user.cert_no IS '证件号码；可空';
 COMMENT ON COLUMN public.cmn_user.last_login_time IS '最近登录时间';
-COMMENT ON COLUMN public.cmn_user.last_login_client IS '最近登录终端，含义同 register_client';
-COMMENT ON COLUMN public.cmn_user.open_union_id IS '开放体系全局标识预留（如对接方用户 id、OAuth subject 等）；细粒度授权建议另建关联表';
+COMMENT ON COLUMN public.cmn_user.last_login_client IS '最近登录终端（如 ADMIN_WEB、MINI_APP）';
 COMMENT ON COLUMN public.cmn_user.remark IS '备注';
 COMMENT ON COLUMN public.cmn_user.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
 COMMENT ON COLUMN public.cmn_user.creator IS '创建人 ID：雪花 64 位，对应 Java long';
@@ -64,21 +64,18 @@ COMMENT ON COLUMN public.cmn_user.edit_time IS '最后更新时间';
 CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_username ON public.cmn_user (username) WHERE username IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_mobile ON public.cmn_user (mobile) WHERE mobile IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_email ON public.cmn_user (email) WHERE email IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_open_union ON public.cmn_user (open_union_id) WHERE open_union_id IS NOT NULL;
-
-CREATE INDEX IF NOT EXISTS idx_cmn_user_subject_type ON public.cmn_user (subject_type);
+CREATE INDEX IF NOT EXISTS idx_cmn_user_user_type ON public.cmn_user (user_type);
 CREATE INDEX IF NOT EXISTS idx_cmn_user_valid ON public.cmn_user (valid);
 
--- 演示账号：用户名 admin，密码 123456（BCrypt，非明文 admin）；生产请删除或改密
+-- 演示账号：用户名 admin，明文密码 admin（BCrypt 摘要如下）；生产请删除或改密
 INSERT INTO public.cmn_user (
-    id, subject_type, username, password, nickname, register_client, valid
+    id, user_type, username, password, nickname, valid
 ) VALUES (
     1970000000000000001,
-    'INTERNAL',
+    'system',
     'admin',
-    '$2a$10$GIIvgyd4HHBkallosEtuF.I7qnF76zaDUDqlaB41IWT1mDfDPPj6C',
+    '$2a$10$QH4b31LZubhon65yXWmf3uabIBRg2uKaDwsGm5RnqfchpIiVyMQ.O',
     '系统管理员',
-    'ADMIN_WEB',
     1
 ) ON CONFLICT (id) DO NOTHING;
 
