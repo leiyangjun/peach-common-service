@@ -1,10 +1,25 @@
 package org.peach.common.service;
 
+import org.peach.common.dto.ResetPwdDTO;
 import org.peach.common.vo.UserVO;
 import org.peach.common.mybatis.service.BaseInterfaceService;
 
 /**
- * 业务服务接口：通用 CRUD 见 {@link BaseInterfaceService}，此处仅可追加扩展方法。
+ * 用户管理：分页、详情、持久化（返回主键）、有效状态切换、重置口令。
  */
 public interface UserService extends BaseInterfaceService<UserVO> {
+
+	/**
+	 * 根据主键是否有效判定新增或修改：{@code id == null} 或 {@code id <= 0} 为新增，否则为修改；返回主键。
+	 */
+	Long persist(UserVO vo);
+
+	/**
+	 * 按主键切换有效状态：当前有效则逻辑删除（无效），当前无效则逻辑恢复（有效）；仅更新逻辑标记列。
+	 *
+	 * @return 切换后的 {@code valid}（0 或 1）
+	 */
+	Short toggleValid(Long id);
+
+	void resetPwd(ResetPwdDTO dto);
 }

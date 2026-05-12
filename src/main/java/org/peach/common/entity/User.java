@@ -7,7 +7,9 @@ import java.util.Date;
 import lombok.Data;
 import org.peach.common.mybatis.annotation.ID;
 import org.peach.common.mybatis.annotation.LogicDelete;
+import org.peach.common.mybatis.annotation.SearchValue;
 import org.peach.common.mybatis.annotation.TableName;
+import org.peach.common.mybatis.annotation.Unique;
 
 @Data
 @TableName("cmn_user")
@@ -24,18 +26,21 @@ public class User implements Serializable {
     private String userType;
 
     @Schema(description = "登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）")
+    @SearchValue
     private String username;
 
     @Schema(description = "密码摘要；免密或纯三方登录可为空")
     private String password;
 
     @Schema(description = "昵称")
+    @SearchValue
     private String nickname;
 
     @Schema(description = "真实姓名或对内展示名")
     private String realName;
 
     @Schema(description = "手机号")
+    @SearchValue
     private String mobile;
 
     @Schema(description = "邮箱")
@@ -62,8 +67,8 @@ public class User implements Serializable {
     @Schema(description = "备注")
     private String remark;
 
-    @Schema(description = "是否有效：1=有效 0=无效（逻辑删除，SMALLINT）")
-    @LogicDelete
+    @Schema(description = "是否有效：1=有效 0=无效（逻辑删除标记，配合 logicDeleteByKey / logicRecoveryByKey）")
+    @LogicDelete(valid = 1, invalid = 0)
     private Short valid;
 
     @Schema(description = "创建人 ID：雪花 64 位，对应 Java long")

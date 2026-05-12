@@ -1,14 +1,15 @@
 package org.peach.common.service.impl;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.peach.common.code.MenuBizCode;
 import org.peach.common.entity.Menu;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mvc.exception.BizException;
-import org.peach.common.mybatis.code.CrudBizCode;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.MenuService;
@@ -57,7 +58,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 	@Override
 	@Transactional
-	public MenuVO save(MenuVO vo) {
+	public Serializable save(MenuVO vo) {
 		Objects.requireNonNull(vo, "vo");
 		validateMenuForSave(vo);
 		return super.save(vo);
@@ -65,51 +66,47 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 	private void validateMenuForSave(MenuVO vo) {
 		if (StringUtils.isBlank(vo.getMenuCode())) {
-			throw BizException.badRequest(CrudBizCode.AFFECTED_ZERO, "menuCode 不能为空");
+			throw BizException.validWarn(MenuBizCode.MENU_CODE_REQUIRED);
 		}
 		if (StringUtils.isBlank(vo.getMenuName())) {
-			throw BizException.badRequest(CrudBizCode.AFFECTED_ZERO, "menuName 不能为空");
+			throw BizException.validWarn(MenuBizCode.MENU_NAME_REQUIRED);
 		}
 		if (StringUtils.isBlank(vo.getMenuType())) {
-			throw BizException.badRequest(CrudBizCode.AFFECTED_ZERO, "menuType 不能为空");
+			throw BizException.validWarn(MenuBizCode.MENU_TYPE_REQUIRED);
 		}
 		Long pid = vo.getParentId();
 		if (pid != null && pid != 0L) {
 			Long current = pid;
 			while (current != null && current != 0L) {
 				if (vo.getId() != null && current.equals(vo.getId())) {
-					throw BizException.badRequest(CrudBizCode.AFFECTED_ZERO, "父菜单不能为当前菜单或其子节点");
+					throw BizException.validWarn(MenuBizCode.MENU_PARENT_CYCLE);
 				}
-				Menu row = mapper.selectBaseByKey(current, Menu.class);
-				if (row == null) {
-					throw BizException.badRequest(CrudBizCode.RECORD_NOT_FOUND, "父菜单不存在");
+				Menu p = mapper.selectBaseByKey(current, Menu.class);
+				if (p == null) {
+					throw BizException.validWarn(MenuBizCode.MENU_PARENT_NOT_FOUND);
 				}
-				current = row.getParentId();
+				current = p.getParentId();
 			}
-		}
-		if (vo.getId() == null && vo.getValid() == null) {
-			vo.setValid((short) 1);
 		}
 	}
 
 	@Override
 	@Transactional
 	public void deletePhysically(Long id) {
-		Objects.requireNonNull(id, "id");
 		Menu row = mapper.selectBaseByKey(id, Menu.class);
 		if (row == null) {
-			throw BizException.badRequest(CrudBizCode.RECORD_NOT_FOUND, "菜单不存在或已删除");
+			throw BizException.validWarn(MenuBizCode.MENU_NOT_FOUND_OR_DELETED);
 		}
 		Menu childCond = new Menu();
 		childCond.setParentId(id);
 		SortVO sort = new SortVO();
-		List<Menu> subs = mapper.selectBase(childCond, sort);
-		if (!subs.isEmpty()) {
-			throw BizException.badRequest(CrudBizCode.AFFECTED_ZERO, "请先删除或移走子菜单后再物理删除");
+		long childCount = mapper.selectBase(childCond, sort).size();
+		if (childCount > 0) {
+			throw BizException.validWarn(MenuBizCode.MENU_HAS_CHILDREN);
 		}
-		Integer n = mapper.deleteBaseByKey(id, Menu.class);
-		if (n == null || n < 1) {
-			throw BizException.badRequest(CrudBizCode.AFFECTED_ZERO, "删除失败");
+		int n = mapper.deleteBaseByKey(id, Menu.class);
+		if (n <= 0) {
+			throw BizException.validWarn(MenuBizCode.MENU_DELETE_FAILED);
 		}
 	}
 }

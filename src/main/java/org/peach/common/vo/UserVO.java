@@ -1,13 +1,14 @@
 package org.peach.common.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
 
-/** 依据 {@link org.peach.common.entity.User} 生成的对外 VO，不同步时手工改。
- */
+/** 用户对外 VO（无 Bean Validation，由业务层按场景处理）。 */
 @Data
 public class UserVO implements Serializable {
 
@@ -23,8 +24,15 @@ public class UserVO implements Serializable {
 	@Schema(description = "登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）")
 	private String username;
 
-	@Schema(description = "密码摘要；免密或纯三方登录可为空")
+	@Schema(description = "密码摘要（仅内部使用，接口不返回）", hidden = true)
+	@JsonIgnore
 	private String password;
+
+	@Schema(description = "明文口令：仅新增或修改密码时传入，不落库")
+	private String plainPassword;
+
+	@Schema(description = "分页/列表关键字：登录名、昵称、手机号模糊匹配（查询参数）")
+	private String searchValue;
 
 	@Schema(description = "昵称")
 	private String nickname;
