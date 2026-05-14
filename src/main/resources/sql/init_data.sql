@@ -1,4 +1,8 @@
 -- 种子数据：在 init_table.sql 之后执行；可单独重复执行时依赖 ON CONFLICT 幂等
+-- 菜单树（cmn_menu / cmn_menu_button / cmn_role_button）与前端写死侧栏一致，来源：
+--   peach-admin-web/src/config/staticSidebarMenus.ts 中 STATIC_SIDEBAR_MENU_TREE
+-- （含 menuCode、menuName、menuType、routePath、icon、orderNo、父子层级）。
+-- component_path 一律 NULL：与前端约定一致，站内视图由 route_path 解析（见 dynamicMenuRoutes / viewRouteResolver）。
 SET client_encoding = 'UTF8';
 SET search_path = public;
 
@@ -26,17 +30,15 @@ INSERT INTO public.cmn_role (
 ) ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
--- 初始化菜单：顶层固定为「首页 / 运营 / 报表」三组；其余业务菜单仅调整 parent_id，不改站内 route_path。
--- ID 约定（雪花 64 位，与历史行尽量复用便于已有环境迁移）：
---   197...0100  首页（CATALOG）
---   197...0198  仪表盘（MENU，/dashboard，原「首页」叶子行复用 id）
---   197...0200  运营（CATALOG）
---   197...0201  系统管理（CATALOG，原 id）
---   197...0202～0205、0203  系统管理下功能页（原 id；0203 菜单管理并入系统管理下）
---   197...0206  演示与外链（CATALOG）
---   197...0210～0212  Swagger / 新窗口演示（原 id，父改为 0206）
---   197...0207  报表（CATALOG）
---   197...0208  报表总览（MENU，/report/overview）
+-- 初始化菜单：与 STATIC_SIDEBAR_MENU_TREE 逐项对应（稳定雪花 id，便于已有库迁移/幂等更新）。
+--   197...0100  NAV_HOME 首页（CATALOG）
+--   197...0198  HOME 工作台（MENU，/dashboard）
+--   197...0200  NAV_OPS 运营（CATALOG）
+--   197...0201  SYS_MGMT 系统管理（CATALOG）
+--   197...0202  SYS_USER；0204 SYS_ROLE；0205 SYS_DICT；0203 SYS_MENU_MGMT
+--   197...0206  OPS_DEMO_LINKS 演示与外链（CATALOG）
+--   197...0210～0212  DEMO_SWAGGER / DEMO_OPEN_EXT / DEMO_OPEN_INT
+--   197...0207  NAV_REPORT；0208 REPORT_OVERVIEW
 -- =============================================================================
 INSERT INTO public.cmn_menu (
     id, parent_id, menu_code, menu_name, menu_type, route_path, component_path, icon, order_no, valid
@@ -60,7 +62,7 @@ INSERT INTO public.cmn_menu (
     '工作台',
     'MENU',
     '/dashboard',
-    'views/dashboard/HomeView.vue',
+    NULL,
     'House',
     10,
     1
@@ -96,7 +98,7 @@ INSERT INTO public.cmn_menu (
     '用户管理',
     'MENU',
     '/system/user',
-    'views/system/UserView.vue',
+    NULL,
     'User',
     11,
     1
@@ -108,7 +110,7 @@ INSERT INTO public.cmn_menu (
     '角色管理',
     'MENU',
     '/system/role',
-    'views/system/RoleView.vue',
+    NULL,
     'Lock',
     12,
     1
@@ -120,7 +122,7 @@ INSERT INTO public.cmn_menu (
     '码表配置',
     'MENU',
     '/system/dict',
-    'views/system/DictView.vue',
+    NULL,
     'Collection',
     13,
     1
@@ -132,7 +134,7 @@ INSERT INTO public.cmn_menu (
     '菜单管理',
     'MENU',
     '/system/menu',
-    'views/system/MenuView.vue',
+    NULL,
     'Menu',
     14,
     1
@@ -156,7 +158,7 @@ INSERT INTO public.cmn_menu (
     '演示Swagger',
     'MENU',
     'frame://http://127.0.0.1:8090/swagger-ui.html',
-    'views/dashboard/HomeView.vue',
+    NULL,
     'Document',
     41,
     1
@@ -168,7 +170,7 @@ INSERT INTO public.cmn_menu (
     '新窗口外站',
     'MENU',
     'openwindow://http://127.0.0.1:8090/index.html',
-    'views/dashboard/HomeView.vue',
+    NULL,
     'Link',
     42,
     1
@@ -180,7 +182,7 @@ INSERT INTO public.cmn_menu (
     '新窗口站内',
     'MENU',
     'openwindow://system/menu',
-    'views/dashboard/HomeView.vue',
+    NULL,
     'Share',
     43,
     1
@@ -204,7 +206,7 @@ INSERT INTO public.cmn_menu (
     '报表总览',
     'MENU',
     '/report/overview',
-    'views/report/OverviewView.vue',
+    NULL,
     'Histogram',
     10,
     1
@@ -220,113 +222,54 @@ ON CONFLICT (id) DO UPDATE SET
     order_no = EXCLUDED.order_no,
     valid = EXCLUDED.valid;
 
--- 初始化角色菜单关联（ROLE_ADMIN 授权上述全部菜单节点，含目录以便树展示）
-INSERT INTO public.cmn_role_menu (
-    id, relation_code, role_id, menu_id, valid
+-- 原 cmn_role_menu 已废弃：以「每菜单一条访问按钮 + cmn_role_button」表达角色可见范围（ROLE_ADMIN 全量）
+INSERT INTO public.cmn_menu_button (
+    id, menu_id, button_code, button_name, order_no, valid
 ) VALUES
-(
-    1970000000000000289,
-    'RM_ROLE_ADMIN_NAV_HOME',
-    1970000000000000101,
-    1970000000000000100,
-    1
-),
-(
-    1970000000000000298,
-    'RM_ROLE_ADMIN_HOME',
-    1970000000000000101,
-    1970000000000000198,
-    1
-),
-(
-    1970000000000000290,
-    'RM_ROLE_ADMIN_NAV_OPS',
-    1970000000000000101,
-    1970000000000000200,
-    1
-),
-(
-    1970000000000000301,
-    'RM_ROLE_ADMIN_SYS_MGMT',
-    1970000000000000101,
-    1970000000000000201,
-    1
-),
-(
-    1970000000000000302,
-    'RM_ROLE_ADMIN_SYS_USER',
-    1970000000000000101,
-    1970000000000000202,
-    1
-),
-(
-    1970000000000000304,
-    'RM_ROLE_ADMIN_SYS_ROLE',
-    1970000000000000101,
-    1970000000000000204,
-    1
-),
-(
-    1970000000000000305,
-    'RM_ROLE_ADMIN_SYS_DICT',
-    1970000000000000101,
-    1970000000000000205,
-    1
-),
-(
-    1970000000000000303,
-    'RM_ROLE_ADMIN_SYS_MENU_MGMT',
-    1970000000000000101,
-    1970000000000000203,
-    1
-),
-(
-    1970000000000000291,
-    'RM_ROLE_ADMIN_OPS_DEMO_LINKS',
-    1970000000000000101,
-    1970000000000000206,
-    1
-),
-(
-    1970000000000000310,
-    'RM_ROLE_ADMIN_DEMO_SWAGGER',
-    1970000000000000101,
-    1970000000000000210,
-    1
-),
-(
-    1970000000000000311,
-    'RM_ROLE_ADMIN_DEMO_OPEN_EXT',
-    1970000000000000101,
-    1970000000000000211,
-    1
-),
-(
-    1970000000000000312,
-    'RM_ROLE_ADMIN_DEMO_OPEN_INT',
-    1970000000000000101,
-    1970000000000000212,
-    1
-),
-(
-    1970000000000000292,
-    'RM_ROLE_ADMIN_NAV_REPORT',
-    1970000000000000101,
-    1970000000000000207,
-    1
-),
-(
-    1970000000000000293,
-    'RM_ROLE_ADMIN_REPORT_OVERVIEW',
-    1970000000000000101,
-    1970000000000000208,
-    1
-)
+(1970000000000005001, 1970000000000000100, 'ACCESS_NAV_HOME', '访问菜单', 1, 1),
+(1970000000000005002, 1970000000000000198, 'ACCESS_HOME', '访问菜单', 1, 1),
+(1970000000000005003, 1970000000000000200, 'ACCESS_NAV_OPS', '访问菜单', 1, 1),
+(1970000000000005004, 1970000000000000201, 'ACCESS_SYS_MGMT', '访问菜单', 1, 1),
+(1970000000000005005, 1970000000000000202, 'ACCESS_SYS_USER', '访问菜单', 1, 1),
+(1970000000000005006, 1970000000000000204, 'ACCESS_SYS_ROLE', '访问菜单', 1, 1),
+(1970000000000005007, 1970000000000000205, 'ACCESS_SYS_DICT', '访问菜单', 1, 1),
+(1970000000000005008, 1970000000000000203, 'ACCESS_SYS_MENU_MGMT', '访问菜单', 1, 1),
+(1970000000000005009, 1970000000000000206, 'ACCESS_OPS_DEMO_LINKS', '访问菜单', 1, 1),
+(1970000000000005010, 1970000000000000210, 'ACCESS_DEMO_SWAGGER', '访问菜单', 1, 1),
+(1970000000000005011, 1970000000000000211, 'ACCESS_DEMO_OPEN_EXT', '访问菜单', 1, 1),
+(1970000000000005012, 1970000000000000212, 'ACCESS_DEMO_OPEN_INT', '访问菜单', 1, 1),
+(1970000000000005013, 1970000000000000207, 'ACCESS_NAV_REPORT', '访问菜单', 1, 1),
+(1970000000000005014, 1970000000000000208, 'ACCESS_REPORT_OVERVIEW', '访问菜单', 1, 1)
 ON CONFLICT (id) DO UPDATE SET
-    relation_code = EXCLUDED.relation_code,
-    role_id = EXCLUDED.role_id,
     menu_id = EXCLUDED.menu_id,
+    button_code = EXCLUDED.button_code,
+    button_name = EXCLUDED.button_name,
+    order_no = EXCLUDED.order_no,
     valid = EXCLUDED.valid;
+
+INSERT INTO public.cmn_role_button (
+    id, role_id, button_id, valid
+) VALUES
+(1970000000000006101, 1970000000000000101, 1970000000000005001, 1),
+(1970000000000006102, 1970000000000000101, 1970000000000005002, 1),
+(1970000000000006103, 1970000000000000101, 1970000000000005003, 1),
+(1970000000000006104, 1970000000000000101, 1970000000000005004, 1),
+(1970000000000006105, 1970000000000000101, 1970000000000005005, 1),
+(1970000000000006106, 1970000000000000101, 1970000000000005006, 1),
+(1970000000000006107, 1970000000000000101, 1970000000000005007, 1),
+(1970000000000006108, 1970000000000000101, 1970000000000005008, 1),
+(1970000000000006109, 1970000000000000101, 1970000000000005009, 1),
+(1970000000000006110, 1970000000000000101, 1970000000000005010, 1),
+(1970000000000006111, 1970000000000000101, 1970000000000005011, 1),
+(1970000000000006112, 1970000000000000101, 1970000000000005012, 1),
+(1970000000000006113, 1970000000000000101, 1970000000000005013, 1),
+(1970000000000006114, 1970000000000000101, 1970000000000005014, 1)
+ON CONFLICT (id) DO UPDATE SET
+    role_id = EXCLUDED.role_id,
+    button_id = EXCLUDED.button_id,
+    valid = EXCLUDED.valid;
+
+-- cmn_button_api：按钮与后端 API 的绑定由业务维护或自 /apis 同步，本种子不设默认行。
 
 -- 演示：管理员账号绑定管理员角色
 INSERT INTO public.cmn_role_user (

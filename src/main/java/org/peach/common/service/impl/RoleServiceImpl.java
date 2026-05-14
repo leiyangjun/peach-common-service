@@ -16,7 +16,6 @@ import org.peach.common.entity.RoleUser;
 import org.peach.common.entity.User;
 import org.peach.common.mapper.RoleButtonMapper;
 import org.peach.common.mapper.RoleMapper;
-import org.peach.common.mapper.RoleMenuMapper;
 import org.peach.common.mapper.RoleUserMapper;
 import org.peach.common.mapper.UserMapper;
 import org.peach.common.mvc.exception.BizException;
@@ -34,15 +33,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleVO> implements RoleService {
 
 	private final RoleUserMapper roleUserMapper;
-	private final RoleMenuMapper roleMenuMapper;
 	private final RoleButtonMapper roleButtonMapper;
 	private final UserMapper userMapper;
 
-	public RoleServiceImpl(RoleMapper mapper, RoleUserMapper roleUserMapper, RoleMenuMapper roleMenuMapper,
-			RoleButtonMapper roleButtonMapper, UserMapper userMapper) {
+	public RoleServiceImpl(RoleMapper mapper, RoleUserMapper roleUserMapper, RoleButtonMapper roleButtonMapper,
+			UserMapper userMapper) {
 		super(mapper, Role.class, RoleVO.class);
 		this.roleUserMapper = roleUserMapper;
-		this.roleMenuMapper = roleMenuMapper;
 		this.roleButtonMapper = roleButtonMapper;
 		this.userMapper = userMapper;
 	}
@@ -130,7 +127,6 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 			throw BizException.validWarn(BizMessageCode.Role.ROLE_NOT_FOUND);
 		}
 		roleButtonMapper.physicalDeleteByRoleId(id);
-		roleMenuMapper.physicalDeleteByRoleId(id);
 		roleUserMapper.deleteByRoleId(id);
 		Integer n = mapper.deleteBaseByKey(id, Role.class);
 		if (n == null || n <= 0) {

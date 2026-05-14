@@ -20,9 +20,6 @@ public class RoleButton implements Serializable {
     @ID
     private Long id;
 
-    @Schema(description = "关系编码：如 RB_ROLE_ADMIN_SYS_USER_ADD")
-    private String relationCode;
-
     @Schema(description = "角色 ID（cmn_role.id）")
     private Long roleId;
 

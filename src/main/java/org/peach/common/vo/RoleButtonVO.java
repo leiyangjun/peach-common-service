@@ -17,9 +17,6 @@ public class RoleButtonVO implements Serializable {
 	@Schema(description = "主键：雪花 64 位，对应 Java long")
 	private Long id;
 
-	@Schema(description = "关系编码：如 RB_ROLE_ADMIN_SYS_USER_ADD")
-	private String relationCode;
-
 	@Schema(description = "角色 ID（cmn_role.id）")
 	private Long roleId;
 

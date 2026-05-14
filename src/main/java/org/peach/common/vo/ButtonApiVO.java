@@ -17,26 +17,35 @@ public class ButtonApiVO implements Serializable {
 	@Schema(description = "主键：雪花 64 位，对应 Java long")
 	private Long id;
 
-	@Schema(description = "关系编码：如 BA_SYS_USER_ADD_API_USER_CREATE")
-	private String relationCode;
-
 	@Schema(description = "按钮 ID（cmn_menu_button.id）")
 	private Long buttonId;
 
 	@Schema(description = "API 编码：建议直接使用 /apis 返回的稳定编码")
 	private String apiCode;
 
-	@Schema(description = "API 名称：用于配置页展示")
-	private String apiName;
+	@Schema(description = "HTTP 方法，对应 ApiMeta.method")
+	private String method;
 
-	@Schema(description = "HTTP 方法：GET/POST/PUT/DELETE 等")
-	private String httpMethod;
+	@Schema(description = "接口摘要，对应 ApiMeta.summary")
+	private String summary;
 
-	@Schema(description = "API 路径：如 /users/list")
-	private String apiPath;
+	@Schema(description = "接口详细说明，对应 ApiMeta.description")
+	private String description;
 
-	@Schema(description = "所属服务编码：如 peach-common-service")
-	private String serviceCode;
+	@Schema(description = "展示用简短说明，对应 ApiMeta.apiDesc")
+	private String apiDesc;
+
+	@Schema(description = "路径模板，对应 ApiMeta.urlPath")
+	private String urlPath;
+
+	@Schema(description = "PathPattern 表达式，对应 ApiMeta.pathPattern")
+	private String pathPattern;
+
+	@Schema(description = "所属服务名，对应 ApiMeta.serviceName")
+	private String serviceName;
+
+	@Schema(description = "接口形态 admin/app/openapi，对应 ApiMeta.apiType")
+	private String apiType;
 
 	@Schema(description = "是否有效：1=有效 0=无效（逻辑删除，SMALLINT）")
 	private Short valid;

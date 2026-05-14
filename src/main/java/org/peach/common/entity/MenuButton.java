@@ -29,9 +29,6 @@ public class MenuButton implements Serializable {
     @Schema(description = "按钮名称：如 新增、删除、导出")
     private String buttonName;
 
-    @Schema(description = "权限点编码（可选）：如 system:user:add")
-    private String permissionCode;
-
     @Schema(description = "同菜单下排序号，越小越靠前")
     private Integer orderNo;
 
