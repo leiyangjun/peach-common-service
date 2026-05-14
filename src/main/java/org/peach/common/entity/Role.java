@@ -7,7 +7,9 @@ import java.util.Date;
 import lombok.Data;
 import org.peach.common.mybatis.annotation.ID;
 import org.peach.common.mybatis.annotation.LogicDelete;
+import org.peach.common.mybatis.annotation.SearchValue;
 import org.peach.common.mybatis.annotation.TableName;
+import org.peach.common.mybatis.annotation.Unique;
 
 @Data
 @TableName("cmn_role")
@@ -21,9 +23,12 @@ public class Role implements Serializable {
     private Long id;
 
     @Schema(description = "角色编码：如 ROLE_ADMIN、ROLE_OPERATOR")
+    @Unique
+    @SearchValue
     private String roleCode;
 
     @Schema(description = "角色名称：用于页面展示")
+    @SearchValue
     private String roleName;
 
     @Schema(description = "备注")

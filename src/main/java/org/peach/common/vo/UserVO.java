@@ -1,6 +1,9 @@
 package org.peach.common.vo;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import org.peach.common.mvc.annotation.json.Sensitive;
+import org.peach.common.mvc.annotation.json.SensitiveType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
@@ -24,17 +27,25 @@ public class UserVO implements Serializable {
 	@Schema(description = "登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）")
 	private String username;
 
-	@Schema(description = "密码摘要（仅内部使用，接口不返回）", hidden = true)
-	@JsonIgnore
+	/**
+	 * 密码摘要：与 {@link org.peach.common.entity.User#password} 同列，仅存哈希（如 BCrypt）。
+	 * <p>
+	 * JSON 写出时经 {@link Sensitive} 掩码展示；库内与内存仍为完整摘要。实体无单独
+	 * {@code passwordDigest} 字段名时，本成员即「摘要」唯一载体。
+	 * </p>
+	 */
+	@Sensitive(SensitiveType.CUSTOM)
+	@Schema(description = "密码摘要（JSON 掩码展示，不落明文）")
 	private String password;
 
+	/**
+	 * 明文口令：仅请求体写入；响应 JSON 不序列化，故无需 {@link Sensitive}。
+	 * 与 {@link #password}（摘要）区分：前者不入库、不出响应，后者为库中哈希。
+	 */
 	@Schema(description = "明文口令：仅新增或修改密码时传入，不落库")
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String plainPassword;
 
-	@Schema(description = "分页/列表关键字：登录名、昵称、手机号模糊匹配（查询参数）")
-	private String searchValue;
-
-	@Schema(description = "昵称")
 	private String nickname;
 
 	@Schema(description = "真实姓名或对内展示名")

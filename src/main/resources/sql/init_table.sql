@@ -1,13 +1,24 @@
--- 创作日期：2026-04-25，作者：leiyangjun — PostgreSQL 12+ 用户表 DDL（与 application 中 DataSource 一致）
--- 主键 ID 使用 BIGINT 存储 64 位雪花，与 org.peach.common.utils.IdUtil#nextId() 及 long/Long 实体字段一致
--- 小写表名/列名，便于与 MyBatis mapUnderscoreToCamelCase 及常规实体映射
--- 执行前请在目标库中：CREATE DATABASE peach_common; 并 \c peach_common 后再执行本脚本
+-- 创作日期：2026-04-25，作者：leiyangjun — PostgreSQL 12+ 公共库 DDL（与 application 中 DataSource 一致）
+-- 执行顺序：先本脚本，再 init_data.sql；执行前请在目标库 CREATE DATABASE 并 \c 到目标库
+-- 策略：DROP TABLE IF EXISTS ... CASCADE 后 CREATE TABLE（破坏性重置，适合开发/空库初始化）
 
 SET client_encoding = 'UTF8';
 SET search_path = public;
 
+-- ========== 删表（依赖多的先删；各表均 CASCADE，避免残留外键）==========
+DROP TABLE IF EXISTS public.cmn_button_api CASCADE;
+DROP TABLE IF EXISTS public.cmn_role_button CASCADE;
+DROP TABLE IF EXISTS public.cmn_menu_button CASCADE;
+DROP TABLE IF EXISTS public.cmn_role_menu CASCADE;
+DROP TABLE IF EXISTS public.cmn_role_user CASCADE;
+DROP TABLE IF EXISTS public.cmn_dict CASCADE;
+DROP TABLE IF EXISTS public.cmn_menu CASCADE;
+DROP TABLE IF EXISTS public.cmn_role CASCADE;
+DROP TABLE IF EXISTS public.cmn_user CASCADE;
+
+-- ========== 建表（父表优先）==========
 -- 用户类型：system=系统侧（后台/员工），app=应用端（C 端等）；证件字段可选填，证件号码允许为空
-CREATE TABLE IF NOT EXISTS public.cmn_user (
+CREATE TABLE public.cmn_user (
     id                 BIGINT         NOT NULL,
     user_type          VARCHAR(16)    NOT NULL DEFAULT 'app',
     username           VARCHAR(64)             NULL,
@@ -60,31 +71,14 @@ COMMENT ON COLUMN public.cmn_user.editor IS '修改人 ID：雪花 64 位，对�
 COMMENT ON COLUMN public.cmn_user.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_user.edit_time IS '最后更新时间';
 
--- 仅对非空登录名唯一（PostgreSQL 中 UNIQUE 允许多个 NULL，此处显式索引便于与 C 端可空 username 共存）
-CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_username ON public.cmn_user (username) WHERE username IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_mobile ON public.cmn_user (mobile) WHERE mobile IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uk_cmn_user_email ON public.cmn_user (email) WHERE email IS NOT NULL;
-CREATE INDEX IF NOT EXISTS idx_cmn_user_user_type ON public.cmn_user (user_type);
-CREATE INDEX IF NOT EXISTS idx_cmn_user_valid ON public.cmn_user (valid);
-
--- 演示账号：用户名 admin，明文密码 admin（BCrypt 摘要如下）；生产请删除或改密
-INSERT INTO public.cmn_user (
-    id, user_type, username, password, nickname, valid
-) VALUES (
-    1970000000000000001,
-    'system',
-    'admin',
-    '$2a$10$QH4b31LZubhon65yXWmf3uabIBRg2uKaDwsGm5RnqfchpIiVyMQ.O',
-    '系统管理员',
-    1
-) ON CONFLICT (id) DO NOTHING;
-
--- 若此前已执行过带「edit_time 触发器」的旧版脚本，可手工清理（无则略过）：
--- DROP TRIGGER IF EXISTS trg_cmn_user_bu ON public.cmn_user;
--- DROP FUNCTION IF EXISTS public.trg_f_cmn_user_touch_edit_time();
+CREATE UNIQUE INDEX uk_cmn_user_username ON public.cmn_user (username) WHERE username IS NOT NULL;
+CREATE UNIQUE INDEX uk_cmn_user_mobile ON public.cmn_user (mobile) WHERE mobile IS NOT NULL;
+CREATE UNIQUE INDEX uk_cmn_user_email ON public.cmn_user (email) WHERE email IS NOT NULL;
+CREATE INDEX idx_cmn_user_user_type ON public.cmn_user (user_type);
+CREATE INDEX idx_cmn_user_valid ON public.cmn_user (valid);
 
 -- 角色表：角色名称用于展示，role_code 用于程序内稳定标识（如鉴权点/网关透传）
-CREATE TABLE IF NOT EXISTS public.cmn_role (
+CREATE TABLE public.cmn_role (
     id                 BIGINT         NOT NULL,
     role_code          VARCHAR(64)    NOT NULL,
     role_name          VARCHAR(64)    NOT NULL,
@@ -110,10 +104,70 @@ COMMENT ON COLUMN public.cmn_role.editor IS '修改人 ID：雪花 64 位，对�
 COMMENT ON COLUMN public.cmn_role.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_role.edit_time IS '最后更新时间';
 
-CREATE INDEX IF NOT EXISTS idx_cmn_role_valid ON public.cmn_role (valid);
+CREATE INDEX idx_cmn_role_valid ON public.cmn_role (valid);
 
--- 菜单表：menu_code 作为前后端联动标识；支持目录/菜单/按钮三级（按 menu_type 区分）
-CREATE TABLE IF NOT EXISTS public.cmn_menu (
+-- 码表（字典项）：同一 dict_type 下 dict_value 全局唯一；status=1 启用、0=停用
+CREATE TABLE public.cmn_dict (
+    id                 BIGINT         NOT NULL,
+    dict_type          VARCHAR(50)    NOT NULL,
+    dict_label         VARCHAR(100)   NOT NULL,
+    dict_value         VARCHAR(100)   NOT NULL,
+    sort_no            INTEGER        NOT NULL DEFAULT 0,
+    status             SMALLINT       NOT NULL DEFAULT 1,
+    remark             VARCHAR(255)            NULL,
+    parent_id          BIGINT         NOT NULL DEFAULT 0,
+    css_class          VARCHAR(100)            NULL,
+    list_class         VARCHAR(100)            NULL,
+    is_default         SMALLINT       NOT NULL DEFAULT 0,
+    creator            BIGINT                  NULL,
+    editor             BIGINT                  NULL,
+    create_time        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_cmn_dict PRIMARY KEY (id),
+    CONSTRAINT ck_cmn_dict_status CHECK (status IN (0, 1)),
+    CONSTRAINT ck_cmn_dict_is_default CHECK (is_default IN (0, 1))
+);
+
+COMMENT ON TABLE public.cmn_dict IS '码表项：status 控制启用/停用；物理删除走 DELETE /dict/{id}/hard';
+COMMENT ON COLUMN public.cmn_dict.dict_type IS '字典类型/分组编码，如 user_status';
+COMMENT ON COLUMN public.cmn_dict.dict_label IS '展示标签';
+COMMENT ON COLUMN public.cmn_dict.dict_value IS '存储值，与 dict_type 组合全局唯一';
+COMMENT ON COLUMN public.cmn_dict.sort_no IS '同类型下排序号，越小越靠前';
+COMMENT ON COLUMN public.cmn_dict.status IS '状态：1=启用 0=停用';
+COMMENT ON COLUMN public.cmn_dict.remark IS '备注';
+COMMENT ON COLUMN public.cmn_dict.parent_id IS '父级主键，0 表示根节点（树形字典）';
+COMMENT ON COLUMN public.cmn_dict.css_class IS '前端附加 CSS 类名';
+COMMENT ON COLUMN public.cmn_dict.list_class IS '列表/标签展示样式类（如 Element Plus tag type）';
+COMMENT ON COLUMN public.cmn_dict.is_default IS '是否默认项：1=是 0=否';
+
+CREATE UNIQUE INDEX uk_cmn_dict_type_value ON public.cmn_dict (dict_type, dict_value);
+CREATE INDEX idx_cmn_dict_type ON public.cmn_dict (dict_type);
+CREATE INDEX idx_cmn_dict_status ON public.cmn_dict (status);
+CREATE INDEX idx_cmn_dict_parent_id ON public.cmn_dict (parent_id);
+
+-- 角色-用户关联表：多对多；同一用户可绑定多个角色，同一角色下用户不重复
+CREATE TABLE public.cmn_role_user (
+    id                 BIGINT         NOT NULL,
+    role_id            BIGINT         NOT NULL,
+    user_id            BIGINT         NOT NULL,
+    create_time        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_cmn_role_user PRIMARY KEY (id),
+    CONSTRAINT uk_cmn_role_user_pair UNIQUE (role_id, user_id),
+    CONSTRAINT fk_cmn_role_user_role FOREIGN KEY (role_id) REFERENCES public.cmn_role (id),
+    CONSTRAINT fk_cmn_role_user_user FOREIGN KEY (user_id) REFERENCES public.cmn_user (id)
+);
+
+COMMENT ON TABLE public.cmn_role_user IS '角色与用户关联：后台授权场景下将系统用户归入角色';
+COMMENT ON COLUMN public.cmn_role_user.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role_user.role_id IS '角色 ID（cmn_role.id）';
+COMMENT ON COLUMN public.cmn_role_user.user_id IS '用户 ID（cmn_user.id）';
+COMMENT ON COLUMN public.cmn_role_user.create_time IS '绑定时间';
+
+CREATE INDEX idx_cmn_role_user_role_id ON public.cmn_role_user (role_id);
+CREATE INDEX idx_cmn_role_user_user_id ON public.cmn_role_user (user_id);
+
+-- 菜单表：menu_code 作为前后端联动标识；支持目录/菜单/按钮三级（按 menu_type 区分）；route_path 支持 frame://、openwindow:// 等长 URL
+CREATE TABLE public.cmn_menu (
     id                 BIGINT         NOT NULL,
     parent_id          BIGINT                 NULL DEFAULT 0,
     menu_code          VARCHAR(64)    NOT NULL,
@@ -152,12 +206,12 @@ COMMENT ON COLUMN public.cmn_menu.editor IS '修改人 ID：雪花 64 位，对�
 COMMENT ON COLUMN public.cmn_menu.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_menu.edit_time IS '最后更新时间';
 
-CREATE INDEX IF NOT EXISTS idx_cmn_menu_parent_id ON public.cmn_menu (parent_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_menu_valid ON public.cmn_menu (valid);
-CREATE INDEX IF NOT EXISTS idx_cmn_menu_type ON public.cmn_menu (menu_type);
+CREATE INDEX idx_cmn_menu_parent_id ON public.cmn_menu (parent_id);
+CREATE INDEX idx_cmn_menu_valid ON public.cmn_menu (valid);
+CREATE INDEX idx_cmn_menu_type ON public.cmn_menu (menu_type);
 
 -- 角色菜单关联表：relation_code 用于稳定标识一次授权关系（审计/同步场景常用）
-CREATE TABLE IF NOT EXISTS public.cmn_role_menu (
+CREATE TABLE public.cmn_role_menu (
     id                 BIGINT         NOT NULL,
     relation_code      VARCHAR(96)    NOT NULL,
     role_id            BIGINT         NOT NULL,
@@ -186,12 +240,12 @@ COMMENT ON COLUMN public.cmn_role_menu.editor IS '修改人 ID：雪花 64 位�
 COMMENT ON COLUMN public.cmn_role_menu.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_role_menu.edit_time IS '最后更新时间';
 
-CREATE INDEX IF NOT EXISTS idx_cmn_role_menu_role_id ON public.cmn_role_menu (role_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_role_menu_menu_id ON public.cmn_role_menu (menu_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_role_menu_valid ON public.cmn_role_menu (valid);
+CREATE INDEX idx_cmn_role_menu_role_id ON public.cmn_role_menu (role_id);
+CREATE INDEX idx_cmn_role_menu_menu_id ON public.cmn_role_menu (menu_id);
+CREATE INDEX idx_cmn_role_menu_valid ON public.cmn_role_menu (valid);
 
 -- 菜单按钮表：权限粒度建议落到按钮，button_code 作为稳定业务编码
-CREATE TABLE IF NOT EXISTS public.cmn_menu_button (
+CREATE TABLE public.cmn_menu_button (
     id                 BIGINT         NOT NULL,
     menu_id            BIGINT         NOT NULL,
     button_code        VARCHAR(64)    NOT NULL,
@@ -225,11 +279,11 @@ COMMENT ON COLUMN public.cmn_menu_button.editor IS '修改人 ID：雪花 64 位
 COMMENT ON COLUMN public.cmn_menu_button.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_menu_button.edit_time IS '最后更新时间';
 
-CREATE INDEX IF NOT EXISTS idx_cmn_menu_button_menu_id ON public.cmn_menu_button (menu_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_menu_button_valid ON public.cmn_menu_button (valid);
+CREATE INDEX idx_cmn_menu_button_menu_id ON public.cmn_menu_button (menu_id);
+CREATE INDEX idx_cmn_menu_button_valid ON public.cmn_menu_button (valid);
 
 -- 按钮-API 绑定表：描述“点击某按钮会调用哪些 API”，并冗余保存 API 明细（来源 /apis）
-CREATE TABLE IF NOT EXISTS public.cmn_button_api (
+CREATE TABLE public.cmn_button_api (
     id                 BIGINT         NOT NULL,
     relation_code      VARCHAR(96)    NOT NULL,
     button_id          BIGINT         NOT NULL,
@@ -266,13 +320,13 @@ COMMENT ON COLUMN public.cmn_button_api.editor IS '修改人 ID：雪花 64 位�
 COMMENT ON COLUMN public.cmn_button_api.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_button_api.edit_time IS '最后更新时间';
 
-CREATE INDEX IF NOT EXISTS idx_cmn_button_api_button_id ON public.cmn_button_api (button_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_button_api_method_path ON public.cmn_button_api (http_method, api_path);
-CREATE INDEX IF NOT EXISTS idx_cmn_button_api_service_code ON public.cmn_button_api (service_code);
-CREATE INDEX IF NOT EXISTS idx_cmn_button_api_valid ON public.cmn_button_api (valid);
+CREATE INDEX idx_cmn_button_api_button_id ON public.cmn_button_api (button_id);
+CREATE INDEX idx_cmn_button_api_method_path ON public.cmn_button_api (http_method, api_path);
+CREATE INDEX idx_cmn_button_api_service_code ON public.cmn_button_api (service_code);
+CREATE INDEX idx_cmn_button_api_valid ON public.cmn_button_api (valid);
 
 -- 角色-按钮授权表：角色权限粒度落在按钮（不直接授权 API）
-CREATE TABLE IF NOT EXISTS public.cmn_role_button (
+CREATE TABLE public.cmn_role_button (
     id                 BIGINT         NOT NULL,
     relation_code      VARCHAR(96)    NOT NULL,
     role_id            BIGINT         NOT NULL,
@@ -301,162 +355,6 @@ COMMENT ON COLUMN public.cmn_role_button.editor IS '修改人 ID：雪花 64 位
 COMMENT ON COLUMN public.cmn_role_button.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_role_button.edit_time IS '最后更新时间';
 
-CREATE INDEX IF NOT EXISTS idx_cmn_role_button_role_id ON public.cmn_role_button (role_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_role_button_button_id ON public.cmn_role_button (button_id);
-CREATE INDEX IF NOT EXISTS idx_cmn_role_button_valid ON public.cmn_role_button (valid);
-
--- 初始化角色（可按实际业务继续扩展）
-INSERT INTO public.cmn_role (
-    id, role_code, role_name, remark, valid
-) VALUES (
-    1970000000000000101,
-    'ROLE_ADMIN',
-    '系统管理员',
-    '初始化角色',
-    1
-) ON CONFLICT (id) DO NOTHING;
-
--- 初始化菜单
-INSERT INTO public.cmn_menu (
-    id, parent_id, menu_code, menu_name, menu_type, route_path, component_path, icon, order_no, valid
-) VALUES
-(
-    1970000000000000198,
-    0,
-    'HOME',
-    '首页',
-    'MENU',
-    '/dashboard',
-    'views/dashboard/HomeView.vue',
-    'House',
-    5,
-    1
-),
-(
-    1970000000000000201,
-    0,
-    'SYS_MGMT',
-    '系统管理',
-    'CATALOG',
-    '/system',
-    NULL,
-    'Setting',
-    10,
-    1
-),
-(
-    1970000000000000202,
-    1970000000000000201,
-    'SYS_USER',
-    '用户管理',
-    'MENU',
-    '/system/user',
-    'views/system/UserView.vue',
-    'User',
-    11,
-    1
-),
-(
-    1970000000000000203,
-    0,
-    'SYS_MENU_MGMT',
-    '菜单管理',
-    'MENU',
-    '/system/menu',
-    'views/system/MenuView.vue',
-    'Menu',
-    15,
-    1
-),
-(
-    1970000000000000210,
-    0,
-    'DEMO_SWAGGER',
-    '演示Swagger',
-    'MENU',
-    'frame://http://127.0.0.1:8090/swagger-ui.html',
-    'views/dashboard/HomeView.vue',
-    'Document',
-    40,
-    1
-),
-(
-    1970000000000000211,
-    0,
-    'DEMO_OPEN_EXT',
-    '新窗口外站',
-    'MENU',
-    'openwindow://http://127.0.0.1:8090/index.html',
-    'views/dashboard/HomeView.vue',
-    'Link',
-    41,
-    1
-),
-(
-    1970000000000000212,
-    0,
-    'DEMO_OPEN_INT',
-    '新窗口站内',
-    'MENU',
-    'openwindow://system/menu',
-    'views/dashboard/HomeView.vue',
-    'Share',
-    42,
-    1
-)
-ON CONFLICT (id) DO NOTHING;
-
--- 初始化角色菜单关联
-INSERT INTO public.cmn_role_menu (
-    id, relation_code, role_id, menu_id, valid
-) VALUES
-(
-    1970000000000000301,
-    'RM_ROLE_ADMIN_SYS_MGMT',
-    1970000000000000101,
-    1970000000000000201,
-    1
-),
-(
-    1970000000000000302,
-    'RM_ROLE_ADMIN_SYS_USER',
-    1970000000000000101,
-    1970000000000000202,
-    1
-),
-(
-    1970000000000000303,
-    'RM_ROLE_ADMIN_SYS_MENU_MGMT',
-    1970000000000000101,
-    1970000000000000203,
-    1
-),
-(
-    1970000000000000298,
-    'RM_ROLE_ADMIN_HOME',
-    1970000000000000101,
-    1970000000000000198,
-    1
-),
-(
-    1970000000000000310,
-    'RM_ROLE_ADMIN_DEMO_SWAGGER',
-    1970000000000000101,
-    1970000000000000210,
-    1
-),
-(
-    1970000000000000311,
-    'RM_ROLE_ADMIN_DEMO_OPEN_EXT',
-    1970000000000000101,
-    1970000000000000211,
-    1
-),
-(
-    1970000000000000312,
-    'RM_ROLE_ADMIN_DEMO_OPEN_INT',
-    1970000000000000101,
-    1970000000000000212,
-    1
-)
-ON CONFLICT (id) DO NOTHING;
+CREATE INDEX idx_cmn_role_button_role_id ON public.cmn_role_button (role_id);
+CREATE INDEX idx_cmn_role_button_button_id ON public.cmn_role_button (button_id);
+CREATE INDEX idx_cmn_role_button_valid ON public.cmn_role_button (valid);

@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.peach.common.code.MenuBizCode;
+import org.peach.common.code.BizMessageCode;
 import org.peach.common.entity.Menu;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mvc.exception.BizException;
@@ -66,24 +66,24 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 	private void validateMenuForSave(MenuVO vo) {
 		if (StringUtils.isBlank(vo.getMenuCode())) {
-			throw BizException.validWarn(MenuBizCode.MENU_CODE_REQUIRED);
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_CODE_REQUIRED);
 		}
 		if (StringUtils.isBlank(vo.getMenuName())) {
-			throw BizException.validWarn(MenuBizCode.MENU_NAME_REQUIRED);
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_NAME_REQUIRED);
 		}
 		if (StringUtils.isBlank(vo.getMenuType())) {
-			throw BizException.validWarn(MenuBizCode.MENU_TYPE_REQUIRED);
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_TYPE_REQUIRED);
 		}
 		Long pid = vo.getParentId();
 		if (pid != null && pid != 0L) {
 			Long current = pid;
 			while (current != null && current != 0L) {
 				if (vo.getId() != null && current.equals(vo.getId())) {
-					throw BizException.validWarn(MenuBizCode.MENU_PARENT_CYCLE);
+					throw BizException.validWarn(BizMessageCode.Menu.MENU_PARENT_CYCLE);
 				}
 				Menu p = mapper.selectBaseByKey(current, Menu.class);
 				if (p == null) {
-					throw BizException.validWarn(MenuBizCode.MENU_PARENT_NOT_FOUND);
+					throw BizException.validWarn(BizMessageCode.Menu.MENU_PARENT_NOT_FOUND);
 				}
 				current = p.getParentId();
 			}
@@ -95,18 +95,18 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 	public void deletePhysically(Long id) {
 		Menu row = mapper.selectBaseByKey(id, Menu.class);
 		if (row == null) {
-			throw BizException.validWarn(MenuBizCode.MENU_NOT_FOUND_OR_DELETED);
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_NOT_FOUND_OR_DELETED);
 		}
 		Menu childCond = new Menu();
 		childCond.setParentId(id);
 		SortVO sort = new SortVO();
 		long childCount = mapper.selectBase(childCond, sort).size();
 		if (childCount > 0) {
-			throw BizException.validWarn(MenuBizCode.MENU_HAS_CHILDREN);
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_HAS_CHILDREN);
 		}
 		int n = mapper.deleteBaseByKey(id, Menu.class);
 		if (n <= 0) {
-			throw BizException.validWarn(MenuBizCode.MENU_DELETE_FAILED);
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_DELETE_FAILED);
 		}
 	}
 }

@@ -2,6 +2,7 @@ package org.peach.common.web;
 
 import java.util.List;
 
+import org.peach.common.mvc.api.context.annotation.AdminApi;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
 import org.peach.common.service.impl.MenuServiceImpl;
@@ -20,7 +21,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * 继承 {@link BaseController}；补充菜单树（不分页）接口。
  * <p>
- * 基础路径由 {@code /api/cmn/menu} 调整为 {@code /menu}，与网关转发前缀组合为完整访问路径。
+ * 基础路径由 {@code /api/cmn/menu} 调整为 {@code /menu}；在 {@code peach.api.context} 开启时由
+ * {@link AdminApi} 固定为管理端形态，完整对外路径为 {@code /admin/menu/**}，与 peach-admin-web 的
+ * {@code /api-common} + 管理前缀 + {@code /menu/...} 一致。
+ * </p>
+ * <p>
+ * 切勿误标 {@code @AppApi}，否则将注册到 {@code /app/menu/**}，前端仍请求 {@code /admin/menu/**} 会导致 404。
  * </p>
  */
 @RestController

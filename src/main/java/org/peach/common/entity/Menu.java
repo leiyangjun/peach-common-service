@@ -35,7 +35,8 @@ public class Menu implements Serializable {
     @Schema(description = "前端路由路径")
     private String routePath;
 
-    @Schema(description = "前端组件路径")
+    /** 可选；管理端前端已改为按 route_path 约定解析 views，本字段可留空或由历史数据保留。 */
+    @Schema(description = "前端组件路径（可选，遗留字段）")
     private String componentPath;
 
     @Schema(description = "菜单图标")

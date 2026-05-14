@@ -30,6 +30,7 @@ spring:
   # 方案A：关闭读写分离（默认）
   # ==============================
   # 关闭时仅使用 spring.datasource 单数据源，适合本地开发与简单部署。
+  # 数据库结构/种子：手动执行 src/main/resources/sql/init_table.sql 后再执行 init_data.sql（本服务未启用 Flyway/Liquibase）
   datasource:
     url: ${DB_URL:jdbc:postgresql://192.168.99.100:5432/peach_common?currentSchema=public}
     username: ${DB_USERNAME:postgres}
@@ -48,6 +49,7 @@ spring:
         password: ${DB_READ_PASSWORD:postgres}
         driver-class-name: org.postgresql.Driver
 
+#peach.api.context.enable: true
 # ==============================
 # 方案B：开启读写分离
 # ==============================

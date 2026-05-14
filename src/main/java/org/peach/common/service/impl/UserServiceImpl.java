@@ -1,17 +1,13 @@
 package org.peach.common.service.impl;
 
 import java.io.Serializable;
-import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.peach.common.code.UserBizCode;
+import org.peach.common.code.BizMessageCode;
 import org.peach.common.dto.ResetPwdDTO;
 import org.peach.common.entity.User;
 import org.peach.common.mapper.UserMapper;
 import org.peach.common.mvc.exception.BizException;
-import org.peach.common.mybatis.model.vo.CommonQueryVO;
-import org.peach.common.mybatis.model.vo.PageVO;
-import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.UserService;
 import org.peach.common.util.BCryptUtil;
@@ -19,9 +15,6 @@ import org.peach.common.utils.BeanUtil;
 import org.peach.common.vo.UserVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 
 /**
  * 用户管理：新增/修改返回主键；有效切换仅用 logicDeleteByKey / logicRecoveryByKey。
@@ -33,32 +26,6 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 
 	public UserServiceImpl(UserMapper mapper) {
 		super(mapper, User.class, UserVO.class);
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public PageInfo<UserVO> listPage(UserVO condition, PageVO page, SortVO sort) {
-		CommonQueryVO q = new CommonQueryVO();
-		if (condition != null && StringUtils.isNotBlank(condition.getSearchValue())) {
-			q.setSearchValue(condition.getSearchValue().trim());
-		}
-		PageHelper.startPage(page.getPageNum(), page.getPageSize());
-		User cond = condition == null ? new User() : BeanUtil.copy(condition, User.class);
-		List<User> rows = mapper.likeSelectBase(cond, q, sort);
-		PageInfo<User> raw = new PageInfo<>(rows);
-		PageInfo<UserVO> out = toVoPageInfo(raw);
-		if (out.getList() != null) {
-			out.getList().forEach(this::stripSecrets);
-		}
-		return out;
-	}
-
-	@Override
-	@Transactional(readOnly = true)
-	public UserVO getById(Serializable id) {
-		UserVO vo = super.getById(id);
-		stripSecrets(vo);
-		return vo;
 	}
 
 	@Override
@@ -82,7 +49,7 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 	public Short toggleValid(Long id) {
 		User u = mapper.selectBaseByKey(id, User.class);
 		if (u == null) {
-			throw BizException.validWarn(UserBizCode.USER_NOT_FOUND);
+			throw BizException.validWarn(BizMessageCode.User.USER_NOT_FOUND);
 		}
 		short cur = u.getValid() == null ? 0 : u.getValid().shortValue();
 		if (cur == 1) {
@@ -98,10 +65,10 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 	public void resetPwd(ResetPwdDTO dto) {
 		User u = mapper.selectBaseByKey(dto.getId(), User.class);
 		if (u == null) {
-			throw BizException.validWarn(UserBizCode.USER_NOT_FOUND);
+			throw BizException.validWarn(BizMessageCode.User.USER_NOT_FOUND);
 		}
 		if (!TYPE_SYSTEM.equals(u.getUserType())) {
-			throw BizException.validWarn(UserBizCode.ONLY_SYSTEM_USER_RESET_PWD);
+			throw BizException.validWarn(BizMessageCode.User.ONLY_SYSTEM_USER_RESET_PWD);
 		}
 		User patch = new User();
 		patch.setId(dto.getId());
@@ -109,10 +76,26 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 		mapper.updateBase(patch);
 	}
 
+	@Override
+	@Transactional
+	public void hardDelete(Long id) {
+		User u = mapper.selectBaseByKey(id, User.class);
+		if (u == null) {
+			throw BizException.validWarn(BizMessageCode.User.USER_NOT_FOUND);
+		}
+		if (!TYPE_SYSTEM.equals(u.getUserType())) {
+			throw BizException.validWarn(BizMessageCode.User.ONLY_SYSTEM_USER_PHYSICAL_DELETE);
+		}
+		Integer n = mapper.deleteBaseByKey(id, User.class);
+		if (n == null || n <= 0) {
+			throw BizException.validWarn(BizMessageCode.User.USER_HARD_DELETE_FAILED);
+		}
+	}
+
 	private Long createSystemUser(UserVO vo) {
 		String login = vo.getUsername() == null ? "" : vo.getUsername().trim();
 		if (Boolean.TRUE.equals(mapper.checkExist(login, User.class, null))) {
-			throw BizException.validWarn(UserBizCode.LOGIN_NAME_EXISTS);
+			throw BizException.validWarn(BizMessageCode.User.LOGIN_NAME_EXISTS);
 		}
 		User entity = BeanUtil.copy(vo, User.class);
 		entity.setId(null);
@@ -129,7 +112,7 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 	private Long updateUser(UserVO vo) {
 		User existing = mapper.selectBaseByKey(vo.getId(), User.class);
 		if (existing == null) {
-			throw BizException.validWarn(UserBizCode.USER_NOT_FOUND);
+			throw BizException.validWarn(BizMessageCode.User.USER_NOT_FOUND);
 		}
 		if (!TYPE_SYSTEM.equals(existing.getUserType())) {
 			return existing.getId();
@@ -137,7 +120,7 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 		String login = vo.getUsername() == null ? null : vo.getUsername().trim();
 		if (login != null && !login.equals(StringUtils.trimToEmpty(existing.getUsername()))) {
 			if (Boolean.TRUE.equals(mapper.checkExist(login, User.class, existing.getId()))) {
-				throw BizException.validWarn(UserBizCode.LOGIN_NAME_CONFLICT);
+				throw BizException.validWarn(BizMessageCode.User.LOGIN_NAME_CONFLICT);
 			}
 		}
 		User patch = BeanUtil.copy(vo, User.class);
@@ -164,12 +147,5 @@ public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserV
 		return p.getUsername() != null || p.getNickname() != null || p.getMobile() != null || p.getEmail() != null
 				|| p.getRealName() != null || p.getRemark() != null || p.getGender() != null || p.getAvatar() != null
 				|| p.getCertType() != null || p.getCertNo() != null || p.getPassword() != null;
-	}
-
-	private void stripSecrets(UserVO vo) {
-		if (vo != null) {
-			vo.setPassword(null);
-			vo.setPlainPassword(null);
-		}
 	}
 }

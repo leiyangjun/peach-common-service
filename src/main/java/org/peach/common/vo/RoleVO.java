@@ -17,7 +17,6 @@ public class RoleVO implements Serializable {
 	@Schema(description = "主键：雪花 64 位，对应 Java long")
 	private Long id;
 
-	@Schema(description = "角色编码：如 ROLE_ADMIN、ROLE_OPERATOR")
 	private String roleCode;
 
 	@Schema(description = "角色名称：用于页面展示")

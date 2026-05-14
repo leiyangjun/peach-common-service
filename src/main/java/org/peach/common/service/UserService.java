@@ -22,4 +22,11 @@ public interface UserService extends BaseInterfaceService<UserVO> {
 	Short toggleValid(Long id);
 
 	void resetPwd(ResetPwdDTO dto);
+
+	/**
+	 * 按主键物理删除用户：仅 {@code user_type = system} 允许；应用端用户拒绝。
+	 *
+	 * @param id 主键
+	 */
+	void hardDelete(Long id);
 }

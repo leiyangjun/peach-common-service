@@ -25,7 +25,8 @@ public class User implements Serializable {
     @Schema(description = "用户类型：system=系统侧，app=应用端（与库约束一致）")
     private String userType;
 
-    @Schema(description = "登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）")
+    @Schema(description = "登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）；与 BaseMapper#checkExist 唯一键语义一致")
+    @Unique
     @SearchValue
     private String username;
 
