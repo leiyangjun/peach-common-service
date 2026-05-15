@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+import org.peach.common.dto.MenuButtonBindingItemDTO;
 import org.peach.common.utils.annotation.TreeId;
 import org.peach.common.utils.annotation.TreeParentId;
 import org.peach.common.utils.annotation.TreeSortField;
@@ -71,4 +72,14 @@ public class MenuVO implements Serializable {
 	/** 菜单树子节点；列表/详情无树语义时可不传或为 null */
 	@Schema(description = "子菜单列表（仅树接口填充）")
 	private List<MenuVO> children;
+
+	/**
+	 * 可选；随 POST /menu 一并提交时，与菜单主体在同一事务内覆盖按钮及 API。
+	 * <p>
+	 * {@code null} 表示不修改绑定（兼容旧客户端）；非 null 时按当前 {@link #menuType} 解释：{@code CATALOG} 仅保留隐式
+	 * BTN_VIEW 且清空 API；{@code MENU} 为全量替换（服务端自动并入 BTN_VIEW）。
+	 * </p>
+	 */
+	@Schema(description = "可选；非 null 时与菜单同事务写入按钮+API 绑定")
+	private List<MenuButtonBindingItemDTO> buttonBindings;
 }

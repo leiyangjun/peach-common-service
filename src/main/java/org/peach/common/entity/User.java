@@ -38,6 +38,7 @@ public class User implements Serializable {
     private String nickname;
 
     @Schema(description = "真实姓名或对内展示名")
+    @SearchValue
     private String realName;
 
     @Schema(description = "手机号")

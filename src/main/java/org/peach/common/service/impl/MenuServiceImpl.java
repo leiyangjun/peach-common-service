@@ -7,12 +7,14 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.peach.common.code.BizMessageCode;
+import org.peach.common.dto.MenuButtonBindingItemDTO;
 import org.peach.common.entity.Menu;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mvc.exception.BizException;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.MenuService;
+import org.peach.common.service.PermissionFacadeService;
 import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.TreeUtil;
 import org.peach.common.vo.MenuVO;
@@ -25,8 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuVO> implements MenuService {
 
-	public MenuServiceImpl(MenuMapper mapper) {
+	private final PermissionFacadeService permissionFacadeService;
+
+	public MenuServiceImpl(MenuMapper mapper, PermissionFacadeService permissionFacadeService) {
 		super(mapper, Menu.class, MenuVO.class);
+		this.permissionFacadeService = Objects.requireNonNull(permissionFacadeService, "permissionFacadeService");
 	}
 
 	@Override
@@ -57,11 +62,20 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 	}
 
 	@Override
-	@Transactional
+	@Transactional(rollbackFor = Exception.class)
 	public Serializable save(MenuVO vo) {
 		Objects.requireNonNull(vo, "vo");
 		validateMenuForSave(vo);
-		return super.save(vo);
+		List<MenuButtonBindingItemDTO> bindings = vo.getButtonBindings();
+		if (bindings != null) {
+			vo.setButtonBindings(null);
+		}
+		Serializable pk = super.save(vo);
+		if (bindings != null) {
+			Long menuId = vo.getId() != null ? vo.getId() : (Long) pk;
+			permissionFacadeService.saveMenuWithButtonBindings(menuId, vo.getMenuType(), bindings);
+		}
+		return pk;
 	}
 
 	private void validateMenuForSave(MenuVO vo) {
