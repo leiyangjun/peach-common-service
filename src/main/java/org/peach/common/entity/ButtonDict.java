@@ -30,7 +30,7 @@ public class ButtonDict implements Serializable {
 	@Schema(description = "按钮名称（展示）")
 	private String buttonName;
 
-	@Schema(description = "按钮编码，全局唯一，如 BTN_VIEW")
+	@Schema(description = "按钮编码，全局唯一，如 BTN_DEFAULT")
 	private String buttonCode;
 
 	@Schema(description = "排序号，越小越靠前")

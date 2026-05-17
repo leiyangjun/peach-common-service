@@ -76,7 +76,7 @@ public class MenuVO implements Serializable {
 	 * 可选；随 POST /menu 一并提交时，与菜单主体在同一事务内覆盖按钮及 API。
 	 * <p>
 	 * {@code null} 表示不修改绑定（兼容旧客户端）；非 null 时按当前 {@link #menuType} 解释：{@code CATALOG} 仅保留隐式
-	 * BTN_VIEW 且清空 API；{@code MENU} 为全量替换（服务端自动并入 BTN_VIEW）。
+	 * BTN_DEFAULT 且清空 API；{@code MENU} 为全量替换（服务端自动并入 BTN_DEFAULT）。
 	 * </p>
  *
  * @author leiyangjun

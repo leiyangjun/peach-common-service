@@ -9,6 +9,7 @@ import org.peach.common.entity.ButtonDict;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.util.ApiMeta;
 import org.peach.common.service.PermissionFacadeService;
+import org.peach.common.vo.CurrentUserPermissionVO;
 import org.peach.common.vo.MenuButtonPickerRowVO;
 import org.peach.common.vo.RegistryServiceItemVO;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,7 +52,7 @@ public class PermissionController {
 		return ApiResult.ok(permissionFacadeService.listMenuButtonBindRows(menuId));
 	}
 
-	@Operation(summary = "全量覆盖菜单按钮绑定", description = "仅允许 cmn_button 主键；MENU 类型自动包含 BTN_VIEW。推荐改用 POST /menu 携带 buttonBindings。", deprecated = true)
+	@Operation(summary = "全量覆盖菜单按钮绑定", description = "仅允许 cmn_button 主键；MENU 类型自动包含 BTN_DEFAULT。推荐改用 POST /menu 携带 buttonBindings。", deprecated = true)
 	@PutMapping("/menu/{menuId}/buttons")
 	public ApiResult<Void> replaceMenuButtons(@PathVariable Long menuId, @RequestBody MenuButtonReplaceDTO body) {
 		permissionFacadeService.replaceMenuButtons(menuId, body);
@@ -96,5 +97,11 @@ public class PermissionController {
 	@GetMapping("/menu-buttons/role-picker")
 	public ApiResult<List<MenuButtonPickerRowVO>> listMenuButtonsForRolePicker() {
 		return ApiResult.ok(permissionFacadeService.listAllMenuButtonsForRolePicker());
+	}
+
+	@Operation(summary = "当前登录用户菜单与按钮权限", description = "用户→角色→角色按钮→菜单按钮；菜单树含祖先目录，无关联查询")
+	@GetMapping("/current-user")
+	public ApiResult<CurrentUserPermissionVO> currentUserPermission() {
+		return ApiResult.ok(permissionFacadeService.listCurrentUserPermission());
 	}
 }

@@ -25,18 +25,26 @@ import org.peach.common.entity.Menu;
 import org.peach.common.entity.MenuButton;
 import org.peach.common.entity.Role;
 import org.peach.common.entity.RoleButton;
+import org.peach.common.entity.RoleUser;
 import org.peach.common.mapper.ButtonApiMapper;
 import org.peach.common.mapper.ButtonDictMapper;
 import org.peach.common.mapper.MenuButtonMapper;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mapper.RoleButtonMapper;
 import org.peach.common.mapper.RoleMapper;
+import org.peach.common.mapper.RoleUserMapper;
 import org.peach.common.mybatis.code.CrudBizCode;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mvc.exception.BizException;
 import org.peach.common.mvc.util.ApiMeta;
+import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.IdUtil;
+import org.peach.common.utils.LoginUserUtil;
+import org.peach.common.utils.TreeUtil;
+import org.peach.common.vo.CurrentUserMenuButtonItemVO;
+import org.peach.common.vo.CurrentUserPermissionVO;
 import org.peach.common.vo.MenuButtonPickerRowVO;
+import org.peach.common.vo.MenuVO;
 import org.peach.common.vo.RegistryServiceItemVO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +60,7 @@ public class PermissionFacadeService {
 
 	private static final String MENU_TYPE_MENU = "MENU";
 	private static final String MENU_TYPE_CATALOG = "CATALOG";
-	private static final String DICT_CODE_VIEW = "BTN_VIEW";
+	private static final String DICT_CODE_VIEW = "BTN_DEFAULT";
 	private static final String GATEWAY_SERVICE_ID = "peach-gateway";
 
 	private final MenuMapper menuMapper;
@@ -61,6 +69,7 @@ public class PermissionFacadeService {
 	private final ButtonApiMapper buttonApiMapper;
 	private final RoleButtonMapper roleButtonMapper;
 	private final RoleMapper roleMapper;
+	private final RoleUserMapper roleUserMapper;
 
 	private final org.springframework.cloud.client.discovery.DiscoveryClient discoveryClient;
 
@@ -116,8 +125,8 @@ public class PermissionFacadeService {
 	}
 
 	/**
-	 * 与菜单保存同事务：按类型覆盖按钮及 API；{@code items} 在 MENU 下为全量（服务端并入 BTN_VIEW），CATALOG 下忽略内容仅保留
-	 * BTN_VIEW。
+	 * 与菜单保存同事务：按类型覆盖按钮及 API；{@code items} 在 MENU 下为全量（服务端并入 BTN_DEFAULT），CATALOG 下忽略内容仅保留
+	 * BTN_DEFAULT。
  *
  * @author leiyangjun
  */
@@ -347,6 +356,128 @@ public class PermissionFacadeService {
  */
 	public List<MenuButtonPickerRowVO> listAllMenuButtonsForRolePicker() {
 		return menuButtonMapper.listAllMenuButtonsForRolePicker();
+	}
+
+	/**
+	 * 当前登录用户菜单与按钮权限：用户→角色→角色按钮→菜单按钮→菜单（分步 BaseMapper，无关联查询）。
+	 */
+	@Transactional(readOnly = true)
+	public CurrentUserPermissionVO listCurrentUserPermission() {
+		Long userId = LoginUserUtil.getLoginUserId();
+		if (userId == null) {
+			throw BizException.validWarn(CrudBizCode.TABLE_KEY_INVALID, "未登录或无法识别当前用户");
+		}
+
+		RoleUser roleUserProbe = new RoleUser();
+		roleUserProbe.setUserId(userId);
+		List<RoleUser> roleUsers = roleUserMapper.selectBase(roleUserProbe, null);
+		if (roleUsers == null || roleUsers.isEmpty()) {
+			return emptyCurrentUserPermission();
+		}
+
+		LinkedHashSet<Long> roleIds = roleUsers.stream().map(RoleUser::getRoleId).filter(Objects::nonNull)
+				.collect(Collectors.toCollection(LinkedHashSet::new));
+		if (roleIds.isEmpty()) {
+			return emptyCurrentUserPermission();
+		}
+
+		LinkedHashSet<Long> menuButtonIds = new LinkedHashSet<>();
+		for (Long roleId : roleIds) {
+			RoleButton roleButtonProbe = new RoleButton();
+			roleButtonProbe.setRoleId(roleId);
+			roleButtonProbe.setValid((short) 1);
+			List<RoleButton> roleButtons = roleButtonMapper.selectBase(roleButtonProbe, null);
+			if (roleButtons == null) {
+				continue;
+			}
+			for (RoleButton rb : roleButtons) {
+				if (rb.getButtonId() != null) {
+					menuButtonIds.add(rb.getButtonId());
+				}
+			}
+		}
+		if (menuButtonIds.isEmpty()) {
+			return emptyCurrentUserPermission();
+		}
+
+		List<MenuButton> menuButtons = menuButtonMapper.selectBaseByKeys(new ArrayList<>(menuButtonIds),
+				MenuButton.class, null);
+		if (menuButtons == null) {
+			menuButtons = List.of();
+		}
+		List<MenuButton> activeButtons = menuButtons.stream()
+				.filter(mb -> mb.getValid() != null && mb.getValid() == 1 && mb.getMenuId() != null)
+				.collect(Collectors.toList());
+		if (activeButtons.isEmpty()) {
+			return emptyCurrentUserPermission();
+		}
+
+		Menu menuProbe = new Menu();
+		menuProbe.setValid((short) 1);
+		SortVO menuSort = new SortVO();
+		menuSort.setSortName("orderNo");
+		menuSort.setSortType("asc");
+		List<Menu> allValidMenus = menuMapper.selectBase(menuProbe, menuSort);
+		if (allValidMenus == null) {
+			allValidMenus = List.of();
+		}
+		Map<Long, Menu> menuById = allValidMenus.stream()
+				.collect(Collectors.toMap(Menu::getId, m -> m, (a, b) -> a, LinkedHashMap::new));
+
+		LinkedHashSet<Long> visibleMenuIds = new LinkedHashSet<>();
+		for (MenuButton mb : activeButtons) {
+			collectMenuAncestors(mb.getMenuId(), menuById, visibleMenuIds);
+		}
+
+		List<MenuVO> flatMenus = allValidMenus.stream().filter(m -> visibleMenuIds.contains(m.getId()))
+				.map(m -> BeanUtil.copy(m, MenuVO.class)).collect(Collectors.toList());
+		List<MenuVO> menuTree = TreeUtil.tree(flatMenus, MenuVO.class);
+
+		List<CurrentUserMenuButtonItemVO> buttonItems = new ArrayList<>();
+		for (MenuButton mb : activeButtons) {
+			Menu menu = menuById.get(mb.getMenuId());
+			CurrentUserMenuButtonItemVO item = new CurrentUserMenuButtonItemVO();
+			item.setMenuButtonId(mb.getId());
+			item.setMenuId(mb.getMenuId());
+			item.setButtonCode(mb.getButtonCode());
+			item.setButtonName(mb.getButtonName());
+			if (menu != null) {
+				item.setMenuCode(menu.getMenuCode());
+				item.setRoutePath(menu.getRoutePath());
+			}
+			buttonItems.add(item);
+		}
+
+		CurrentUserPermissionVO vo = new CurrentUserPermissionVO();
+		vo.setMenuTree(menuTree);
+		vo.setMenuButtons(buttonItems);
+		return vo;
+	}
+
+	private CurrentUserPermissionVO emptyCurrentUserPermission() {
+		CurrentUserPermissionVO vo = new CurrentUserPermissionVO();
+		vo.setMenuTree(List.of());
+		vo.setMenuButtons(List.of());
+		return vo;
+	}
+
+	/** 将菜单及其祖先目录 id 纳入可见集合（内存回溯，无 JOIN）。 */
+	private void collectMenuAncestors(Long menuId, Map<Long, Menu> menuById, LinkedHashSet<Long> out) {
+		Long cur = menuId;
+		while (cur != null && cur > 0L) {
+			if (!out.add(cur)) {
+				break;
+			}
+			Menu menu = menuById.get(cur);
+			if (menu == null) {
+				break;
+			}
+			Long parentId = menu.getParentId();
+			if (parentId == null || parentId <= 0L) {
+				break;
+			}
+			cur = parentId;
+		}
 	}
 
 	private Long requireDictIdByCode(String code) {
