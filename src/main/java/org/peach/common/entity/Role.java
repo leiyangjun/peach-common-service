@@ -11,6 +11,12 @@ import org.peach.common.mybatis.annotation.SearchValue;
 import org.peach.common.mybatis.annotation.TableName;
 import org.peach.common.mybatis.annotation.Unique;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Data
 @TableName("cmn_role")
 @Schema(description = "角色表：角色编码 role_code 为稳定业务编码")

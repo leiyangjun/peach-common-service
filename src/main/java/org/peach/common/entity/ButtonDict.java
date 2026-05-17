@@ -9,6 +9,8 @@ import org.peach.common.mybatis.annotation.TableName;
 
 /**
  * 全局按钮字典表 {@code cmn_button} 实体；供菜单多选绑定，无逻辑删除列。
+ *
+ * @author leiyangjun
  */
 @Data
 @TableName("cmn_button")

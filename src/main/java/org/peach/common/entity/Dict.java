@@ -11,6 +11,8 @@ import org.peach.common.mybatis.annotation.TableName;
 
 /**
  * 码表（字典项）实体：同一 {@code dictType} 下 {@code dictValue} 全局唯一；{@code status} 控制启用/停用（无逻辑删除列）。
+ *
+ * @author leiyangjun
  */
 @Data
 @TableName("cmn_dict")

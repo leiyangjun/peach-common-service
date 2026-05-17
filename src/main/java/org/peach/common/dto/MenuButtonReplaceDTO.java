@@ -8,6 +8,8 @@ import lombok.Data;
 
 /**
  * 全量覆盖某菜单下的按钮实例：仅允许传入 cmn_button 主键列表。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "菜单绑定按钮字典主键列表")

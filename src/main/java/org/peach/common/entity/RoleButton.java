@@ -9,6 +9,12 @@ import org.peach.common.mybatis.annotation.ID;
 import org.peach.common.mybatis.annotation.LogicDelete;
 import org.peach.common.mybatis.annotation.TableName;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Data
 @TableName("cmn_role_button")
 @Schema(description = "角色-按钮授权表：角色权限粒度到按钮")

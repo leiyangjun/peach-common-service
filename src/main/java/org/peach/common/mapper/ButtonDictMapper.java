@@ -4,6 +4,12 @@ import org.apache.ibatis.annotations.Mapper;
 import org.peach.common.entity.ButtonDict;
 import org.peach.common.mybatis.mapper.BaseMapper;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Mapper
 public interface ButtonDictMapper extends BaseMapper<ButtonDict> {
 }

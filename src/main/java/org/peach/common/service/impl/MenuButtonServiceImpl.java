@@ -10,6 +10,8 @@ import org.peach.common.service.MenuButtonService;
 
 /**
  * 继承 {@link BaseAbstractService}。
+ *
+ * @author leiyangjun
  */
 @Service
 public class MenuButtonServiceImpl extends BaseAbstractService<MenuButtonMapper, MenuButton, MenuButtonVO> implements MenuButtonService {

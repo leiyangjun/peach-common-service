@@ -8,6 +8,8 @@ import lombok.Data;
 
 /**
  * 全量替换某角色下的用户绑定：{@code userIds} 为空表示清空绑定。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "角色绑定用户：提交后覆盖该角色下全部用户")

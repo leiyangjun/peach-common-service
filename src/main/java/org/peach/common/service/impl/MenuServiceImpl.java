@@ -48,7 +48,9 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 	/**
 	 * 平铺查询菜单；{@code validOnly=true} 时仅 {@code valid=1}，否则不按有效标记过滤。
-	 */
+ *
+ * @author leiyangjun
+ */
 	private List<MenuVO> queryFlatMenus(boolean validOnly) {
 		Menu cond = new Menu();
 		if (validOnly) {

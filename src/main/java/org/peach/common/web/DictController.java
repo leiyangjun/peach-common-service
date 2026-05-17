@@ -27,6 +27,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * 码表配置 REST：分页条件使用 {@link DictPageQuery}；行数据与保存体为 {@link DictVO}；启用/停用仅改 {@code status}，物理删除走 hard。
+ *
+ * @author leiyangjun
  */
 @RestController
 @RequestMapping("/dict")

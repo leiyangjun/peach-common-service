@@ -19,7 +19,9 @@ public class DictPageQuery implements Serializable {
 
 	/**
 	 * 状态范围筛选：null=不加 status 条件（全部）；0=仅停用；1=仅启用。
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Schema(description = "状态筛选：null=全部，0=仅停用，1=仅启用")
 	private Short listStatusFlag;
 }

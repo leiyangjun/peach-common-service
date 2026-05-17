@@ -7,6 +7,8 @@ import java.util.Date;
 import lombok.Data;
 
 /** 依据 {@link org.peach.common.entity.Role} 生成的对外 VO，不同步时手工改。
+ *
+ * @author leiyangjun
  */
 @Data
 public class RoleVO implements Serializable {

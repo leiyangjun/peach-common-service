@@ -20,6 +20,8 @@ import jakarta.validation.Valid;
 
 /**
  * 用户管理 REST：继承 {@link BaseController} 的分页、详情与保存（返回主键）；补充切换有效与重置口令。
+ *
+ * @author leiyangjun
  */
 @RestController
 @RequestMapping("/user")

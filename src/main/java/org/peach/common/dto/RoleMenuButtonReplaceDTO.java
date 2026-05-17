@@ -8,6 +8,8 @@ import lombok.Data;
 
 /**
  * 全量覆盖角色与菜单按钮实例的绑定。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "角色绑定菜单按钮实例主键列表")

@@ -9,6 +9,12 @@ import org.peach.common.mybatis.annotation.ID;
 import org.peach.common.mybatis.annotation.LogicDelete;
 import org.peach.common.mybatis.annotation.TableName;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Data
 @TableName("cmn_menu_button")
 @Schema(description = "菜单按钮表：按钮权限实体，角色授权建议绑定到按钮")

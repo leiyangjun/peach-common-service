@@ -4,6 +4,12 @@ import org.apache.ibatis.annotations.Mapper;
 import org.peach.common.entity.Menu;
 import org.peach.common.mybatis.mapper.BaseMapper;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Mapper
 public interface MenuMapper extends BaseMapper<Menu> {
 }

@@ -28,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 角色管理：关键字分页、编码唯一校验、物理删级联清理、用户绑定全量替换。
+ *
+ * @author leiyangjun
  */
 @Service
 public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleVO> implements RoleService {

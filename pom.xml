@@ -44,16 +44,6 @@
 			<artifactId>peach-common-start</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		<!-- 与 peach-auth-service 一致：显式引入 Nacos 服务发现（peach-common-start 中该依赖为 optional，不会传递） -->
-		<dependency>
-			<groupId>com.alibaba.cloud</groupId>
-			<artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-		</dependency>
-		<!-- 生产/本地默认连 PostgreSQL；驱动由 Spring Boot 父 POM 管理版本 -->
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-		</dependency>
 		<!-- 与 peach-auth-service 一致：系统用户口令 BCrypt 摘要 -->
 		<dependency>
 			<groupId>org.mindrot</groupId>

@@ -9,6 +9,8 @@ import org.peach.common.mvc.util.ApiMeta;
 
 /**
  * 全量覆盖某菜单按钮实例上的 API 绑定。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "按钮 API 绑定提交体")

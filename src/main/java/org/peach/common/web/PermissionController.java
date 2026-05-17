@@ -28,6 +28,8 @@ import lombok.RequiredArgsConstructor;
  * 对外完整路径在开启 {@code peach.api.context} 时为 {@code /admin/permission/**}（与 peach-admin-web
  * {@code /api-common} + 管理前缀一致）。
  * </p>
+ *
+ * @author leiyangjun
  */
 @RestController
 @RequestMapping("/permission")

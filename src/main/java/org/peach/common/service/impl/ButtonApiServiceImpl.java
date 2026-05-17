@@ -10,6 +10,8 @@ import org.peach.common.service.ButtonApiService;
 
 /**
  * 继承 {@link BaseAbstractService}。
+ *
+ * @author leiyangjun
  */
 @Service
 public class ButtonApiServiceImpl extends BaseAbstractService<ButtonApiMapper, ButtonApi, ButtonApiVO> implements ButtonApiService {

@@ -13,8 +13,7 @@ import org.peach.common.utils.annotation.TreeSortField;
 
 import lombok.Data;
 
-/** 依据 {@link org.peach.common.entity.Menu} 生成的对外 VO，不同步时手工改。
- */
+/** 依据 {@link org.peach.common.entity.Menu} 生成的对外 VO，不同步时手工改。 */
 @Data
 public class MenuVO implements Serializable {
 
@@ -79,7 +78,9 @@ public class MenuVO implements Serializable {
 	 * {@code null} 表示不修改绑定（兼容旧客户端）；非 null 时按当前 {@link #menuType} 解释：{@code CATALOG} 仅保留隐式
 	 * BTN_VIEW 且清空 API；{@code MENU} 为全量替换（服务端自动并入 BTN_VIEW）。
 	 * </p>
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Schema(description = "可选；非 null 时与菜单同事务写入按钮+API 绑定")
 	private List<MenuButtonBindingItemDTO> buttonBindings;
 }

@@ -61,7 +61,9 @@ public class DictServiceImpl extends BaseAbstractService<DictMapper, Dict, DictV
 	/**
 	 * 码表分页核心：模糊关键字来自 {@link DictPageQuery#getSearchValue()}；{@code listStatusFlag} 见
 	 * {@link #buildListCondition(DictPageQuery)}。
-	 */
+ *
+ * @author leiyangjun
+ */
 	private PageInfo<DictVO> queryDictPage(DictPageQuery query, PageVO page, SortVO sort) {
 		SearchVO search = new SearchVO();
 		if (query != null && StringUtils.isNotBlank(query.getSearchValue())) {

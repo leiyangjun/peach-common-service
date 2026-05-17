@@ -10,6 +10,12 @@ import org.peach.common.entity.MenuButton;
 import org.peach.common.mybatis.mapper.BaseMapper;
 import org.peach.common.vo.MenuButtonPickerRowVO;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Mapper
 public interface MenuButtonMapper extends BaseMapper<MenuButton> {
 

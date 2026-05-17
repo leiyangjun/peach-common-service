@@ -45,7 +45,9 @@ public class MenuController extends BaseController<MenuVO, MenuServiceImpl> {
 	/**
 	 * 覆盖基类：保存后返回完整 {@link MenuVO}（含树字段可为空），便于前端一次拿到主键与类型；若请求体含
 	 * {@code buttonBindings} 则与菜单同事务写入按钮及 API。
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Override
 	@Operation(summary = "保存或更新菜单", description = "可选 buttonBindings：非 null 时与菜单同事务全量覆盖按钮及 API")
 	@PostMapping

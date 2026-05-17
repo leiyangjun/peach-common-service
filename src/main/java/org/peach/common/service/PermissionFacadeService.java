@@ -66,7 +66,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * 全局按钮字典列表（仅种子维护，无单独字典 CRUD 页）。
-	 */
+ *
+ * @author leiyangjun
+ */
 	public List<ButtonDict> listButtonDict() {
 		SortVO sort = new SortVO();
 		sort.setSortName("sortNo");
@@ -76,7 +78,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * 某菜单当前绑定的按钮行（含字典主键，便于前端回显多选）。
-	 */
+ *
+ * @author leiyangjun
+ */
 	public List<MenuButtonPickerRowVO> listMenuButtonBindRows(Long menuId) {
 		return menuButtonMapper.listBindRowsByMenuId(menuId);
 	}
@@ -86,7 +90,9 @@ public class PermissionFacadeService {
 	 * <p>
 	 * 遗留接口：管理端推荐随 {@code POST /menu} 的 {@code buttonBindings} 一次提交；本接口仍供其他客户端或脚本使用。
 	 * </p>
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Transactional(rollbackFor = Exception.class)
 	public void replaceMenuButtons(Long menuId, MenuButtonReplaceDTO dto) {
 		Menu menu = menuMapper.selectBaseByKey(menuId, Menu.class);
@@ -112,7 +118,9 @@ public class PermissionFacadeService {
 	/**
 	 * 与菜单保存同事务：按类型覆盖按钮及 API；{@code items} 在 MENU 下为全量（服务端并入 BTN_VIEW），CATALOG 下忽略内容仅保留
 	 * BTN_VIEW。
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Transactional(rollbackFor = Exception.class)
 	public void saveMenuWithButtonBindings(Long menuId, String menuType, List<MenuButtonBindingItemDTO> items) {
 		Menu menu = menuMapper.selectBaseByKey(menuId, Menu.class);
@@ -180,7 +188,9 @@ public class PermissionFacadeService {
 	 * 物理重写菜单下按钮行（不校验菜单类型）：删除旧按钮的角色/API/行，按字典顺序插入新行。
 	 *
 	 * @return 字典 id → 新 menu_button.id
-	 */
+ *
+ * @author leiyangjun
+ */
 	private Map<Long, Long> physicalResetMenuButtonsByDictOrder(long menuId, List<ButtonDict> dictRowsOrdered) {
 		List<Long> oldIds = menuButtonMapper.listIdsByMenuId(menuId);
 		if (oldIds != null && !oldIds.isEmpty()) {
@@ -192,7 +202,7 @@ public class PermissionFacadeService {
 		Map<Long, Long> dictIdToButtonId = new LinkedHashMap<>();
 		int order = 0;
 		for (ButtonDict d : dictRowsOrdered) {
-			long newMbId = IdUtil.nextId();
+			long newMbId = IdUtil.shortSnowId();
 			MenuButton mb = new MenuButton();
 			mb.setId(newMbId);
 			mb.setMenuId(menuId);
@@ -211,7 +221,9 @@ public class PermissionFacadeService {
 	 * <p>
 	 * 遗留接口：推荐随菜单 {@code POST /menu} 一次提交；本接口仍供其他客户端使用。
 	 * </p>
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Transactional(rollbackFor = Exception.class)
 	public void replaceMenuButtonApis(Long menuButtonId, MenuButtonApiReplaceDTO dto) {
 		MenuButton mb = menuButtonMapper.selectBaseByKey(menuButtonId, MenuButton.class);
@@ -234,7 +246,7 @@ public class PermissionFacadeService {
 				throw BizException.validWarn(CrudBizCode.TABLE_KEY_INVALID, "API 元数据中 method、urlPath 不能为空");
 			}
 			ButtonApi row = new ButtonApi();
-			row.setId(IdUtil.nextId());
+			row.setId(IdUtil.shortSnowId());
 			row.setButtonId(menuButtonId);
 			row.setApiCode(stableApiCode(meta.getMethod(), meta.getUrlPath()));
 			row.setMethod(meta.getMethod().trim().toUpperCase(Locale.ROOT));
@@ -251,7 +263,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * Nacos 发现的服务 id 列表（排除网关），供前端下拉。
-	 */
+ *
+ * @author leiyangjun
+ */
 	public List<RegistryServiceItemVO> listRegistryServices() {
 		List<String> names = discoveryClient.getServices();
 		if (names == null) {
@@ -268,7 +282,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * 某菜单按钮实例当前已绑定的 API（有效行），字段与 {@link ApiMeta} 对齐。
-	 */
+ *
+ * @author leiyangjun
+ */
 	public List<ApiMeta> listMenuButtonApis(Long menuButtonId) {
 		MenuButton mb = menuButtonMapper.selectBaseByKey(menuButtonId, MenuButton.class);
 		if (mb == null) {
@@ -286,7 +302,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * 角色已绑定的菜单按钮实例 id（仅有效行）。
-	 */
+ *
+ * @author leiyangjun
+ */
 	public List<Long> listRoleMenuButtonIds(Long roleId) {
 		RoleButton probe = new RoleButton();
 		probe.setRoleId(roleId);
@@ -297,7 +315,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * 角色绑定菜单按钮：全量覆盖 {@code cmn_role_button}。
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Transactional(rollbackFor = Exception.class)
 	public void replaceRoleMenuButtons(Long roleId, RoleMenuButtonReplaceDTO dto) {
 		Role role = roleMapper.selectBaseByKey(roleId, Role.class);
@@ -313,7 +333,7 @@ public class PermissionFacadeService {
 				throw BizException.validWarn(CrudBizCode.RECORD_NOT_FOUND, "菜单按钮不存在: " + bid);
 			}
 			RoleButton rb = new RoleButton();
-			rb.setId(IdUtil.nextId());
+			rb.setId(IdUtil.shortSnowId());
 			rb.setRoleId(roleId);
 			rb.setButtonId(bid);
 			roleButtonMapper.insertBase(rb);
@@ -322,7 +342,9 @@ public class PermissionFacadeService {
 
 	/**
 	 * 全部「菜单类型」下的菜单按钮实例，供角色多选绑定。
-	 */
+ *
+ * @author leiyangjun
+ */
 	public List<MenuButtonPickerRowVO> listAllMenuButtonsForRolePicker() {
 		return menuButtonMapper.listAllMenuButtonsForRolePicker();
 	}

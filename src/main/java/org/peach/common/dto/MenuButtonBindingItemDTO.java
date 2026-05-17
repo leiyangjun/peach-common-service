@@ -9,6 +9,8 @@ import org.peach.common.mvc.util.ApiMeta;
 
 /**
  * 菜单保存时单条按钮绑定：字典主键 + 该按钮下 API 全量列表（与 {@link MenuButtonApiReplaceDTO} 语义一致）。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "菜单提交体中的单条按钮绑定")

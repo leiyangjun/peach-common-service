@@ -33,7 +33,9 @@ public class UserVO implements Serializable {
 	 * JSON 写出时经 {@link Sensitive} 掩码展示；库内与内存仍为完整摘要。实体无单独
 	 * {@code passwordDigest} 字段名时，本成员即「摘要」唯一载体。
 	 * </p>
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Sensitive(SensitiveType.CUSTOM)
 	@Schema(description = "密码摘要（JSON 掩码展示，不落明文）")
 	private String password;
@@ -41,7 +43,9 @@ public class UserVO implements Serializable {
 	/**
 	 * 明文口令：仅请求体写入；响应 JSON 不序列化，故无需 {@link Sensitive}。
 	 * 与 {@link #password}（摘要）区分：前者不入库、不出响应，后者为库中哈希。
-	 */
+ *
+ * @author leiyangjun
+ */
 	@Schema(description = "明文口令：仅新增或修改密码时传入，不落库")
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String plainPassword;

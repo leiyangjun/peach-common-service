@@ -7,6 +7,8 @@ import lombok.Data;
 
 /**
  * 注册中心可发现的服务项，供前端下拉选择后再拉取该服务的 admin API 列表。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "Nacos 发现的服务实例 id（一般等于 spring.application.name）")

@@ -23,24 +23,32 @@ public interface DictService extends BaseInterfaceService<DictVO> {
 
 	/**
 	 * 关键字分页：条件取自 {@link DictPageQuery}，与行数据 VO 字段解耦。
-	 */
+ *
+ * @author leiyangjun
+ */
 	PageInfo<DictVO> listPage(DictPageQuery query, PageVO page, SortVO sort);
 
 	/**
 	 * 列出库中已存在的字典类型编码（去重），供前端主档筛选与表单下拉。
-	 */
+ *
+ * @author leiyangjun
+ */
 	List<String> listDistinctTypes();
 
 	/**
 	 * 新增或修改：{@code id == null} 或 {@code id <= 0} 为新增；返回主键。
-	 */
+ *
+ * @author leiyangjun
+ */
 	Long persist(DictVO vo);
 
 	/**
 	 * 切换 {@code status}（启用/停用）。
 	 *
 	 * @return 切换后的 status（0 或 1）
-	 */
+ *
+ * @author leiyangjun
+ */
 	Short toggleStatus(Long id);
 
 	/** 物理删除单行。 */

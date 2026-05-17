@@ -9,6 +9,11 @@ import org.peach.common.mybatis.annotation.ID;
 import org.peach.common.mybatis.annotation.LogicDelete;
 import org.peach.common.mybatis.annotation.TableName;
 
+/**
+ * 菜单实体，映射 {@code cmn_menu}：目录 / 菜单 / 按钮，{@code menu_code} 为稳定业务编码。
+ *
+ * @author leiyangjun
+ */
 @Data
 @TableName("cmn_menu")
 @Schema(description = "菜单表：支持目录/菜单/按钮，menu_code 为稳定业务编码")
@@ -35,7 +40,10 @@ public class Menu implements Serializable {
     @Schema(description = "前端路由路径")
     private String routePath;
 
-    /** 可选；管理端前端已改为按 route_path 约定解析 views，本字段可留空或由历史数据保留。 */
+    /** 可选；管理端前端已改为按 route_path 约定解析 views，本字段可留空或由历史数据保留。
+ *
+ * @author leiyangjun
+ */
     @Schema(description = "前端组件路径（可选，遗留字段）")
     private String componentPath;
 

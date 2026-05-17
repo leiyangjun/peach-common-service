@@ -11,6 +11,8 @@ import lombok.Data;
 
 /**
  * 系统用户重置登录口令入参。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "重置密码")

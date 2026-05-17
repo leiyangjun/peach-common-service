@@ -7,6 +7,8 @@ import lombok.Data;
 
 /**
  * 菜单按钮绑定行或角色选择器行：联合查询结果。
+ *
+ * @author leiyangjun
  */
 @Data
 @Schema(description = "菜单按钮与字典、菜单名称的联合展示")

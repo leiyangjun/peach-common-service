@@ -8,6 +8,8 @@ import lombok.Data;
 
 /**
  * 码表管理对外 VO：与 {@link org.peach.common.entity.Dict} 行字段一致，用于详情、列表行与保存请求体（不含分页专用参数）。
+ *
+ * @author leiyangjun
  */
 @Data
 public class DictVO implements Serializable {

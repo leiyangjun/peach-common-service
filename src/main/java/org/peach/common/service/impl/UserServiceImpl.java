@@ -18,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 用户管理：新增/修改返回主键；有效切换仅用 logicDeleteByKey / logicRecoveryByKey。
+ *
+ * @author leiyangjun
  */
 @Service
 public class UserServiceImpl extends BaseAbstractService<UserMapper, User, UserVO> implements UserService {

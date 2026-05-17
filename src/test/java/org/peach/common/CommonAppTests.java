@@ -3,9 +3,7 @@ package org.peach.common;
 import org.junit.jupiter.api.Test;
 
 /**
- * 基础单测入口（不拉起 Spring 上下文，避免对数据库与 Mapper 扫描的额外要求）。
- *
- * @author leiyangjun
+ * 基础单测：仅校验启动类可加载，不启动 Spring 上下文。
  */
 class CommonAppTests {
 

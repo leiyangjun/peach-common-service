@@ -10,6 +10,8 @@ import org.peach.common.service.RoleButtonService;
 
 /**
  * 继承 {@link BaseAbstractService}。
+ *
+ * @author leiyangjun
  */
 @Service
 public class RoleButtonServiceImpl extends BaseAbstractService<RoleButtonMapper, RoleButton, RoleButtonVO> implements RoleButtonService {

@@ -11,6 +11,12 @@ import org.peach.common.mybatis.annotation.SearchValue;
 import org.peach.common.mybatis.annotation.TableName;
 import org.peach.common.mybatis.annotation.Unique;
 
+
+/**
+ * 见类名。
+ *
+ * @author leiyangjun
+ */
 @Data
 @TableName("cmn_user")
 @Schema(description = "用户：按 user_type 区分系统侧（system）与应用端（app）；含可选证件信息")

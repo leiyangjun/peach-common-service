@@ -10,6 +10,8 @@ import org.peach.common.mybatis.annotation.TableName;
 
 /**
  * 角色与用户多对多关联实体，对应表 {@code cmn_role_user}。
+ *
+ * @author leiyangjun
  */
 @Data
 @TableName("cmn_role_user")
