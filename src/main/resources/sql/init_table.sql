@@ -1,6 +1,7 @@
--- 创作日期：2026-04-25，作者：leiyangjun — PostgreSQL 12+ 公共库 DDL（与 application 中 DataSource 一致）
--- 执行顺序：先本脚本，再 init_data.sql；执行前请在目标库 CREATE DATABASE 并 \c 到目标库
+-- 创作日期：2026-05-17，作者：leiyangjun — PostgreSQL 12+ 公共库 DDL（与 application 中 DataSource 一致）
+-- 执行顺序：先本脚本（纯 DDL），再 init_data.sql（种子数据）；执行前请在目标库 CREATE DATABASE 并 \c 到目标库
 -- 策略：DROP TABLE IF EXISTS ... CASCADE 后 CREATE TABLE（破坏性重置，适合开发/空库初始化）
+-- 主键策略：短雪花 BIGINT，与 IdUtil.shortSnowId() 一致；不使用外键，关联由应用层维护
 
 SET client_encoding = 'UTF8';
 SET search_path = public;
@@ -51,7 +52,7 @@ CREATE TABLE public.cmn_user (
 );
 
 COMMENT ON TABLE public.cmn_user IS '用户：按 user_type 区分系统侧与 App 端；证件类型/号码用于实名展示（号码可空）';
-COMMENT ON COLUMN public.cmn_user.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_user.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_user.user_type IS '用户类型：system=系统侧，app=应用端（与 JWT Claim user_type 一致）';
 COMMENT ON COLUMN public.cmn_user.username IS '登录名；系统侧必填（由约束保证），app 端可空（手机/三方为主）';
 COMMENT ON COLUMN public.cmn_user.password IS '密码摘要；免密或纯三方登录可为空';
@@ -67,8 +68,8 @@ COMMENT ON COLUMN public.cmn_user.last_login_time IS '最近登录时间';
 COMMENT ON COLUMN public.cmn_user.last_login_client IS '最近登录终端（如 ADMIN_WEB、MINI_APP）';
 COMMENT ON COLUMN public.cmn_user.remark IS '备注';
 COMMENT ON COLUMN public.cmn_user.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
-COMMENT ON COLUMN public.cmn_user.creator IS '创建人 ID：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_user.editor IS '修改人 ID：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_user.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_user.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_user.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_user.edit_time IS '最后更新时间';
 
@@ -77,6 +78,7 @@ CREATE UNIQUE INDEX uk_cmn_user_mobile ON public.cmn_user (mobile) WHERE mobile 
 CREATE UNIQUE INDEX uk_cmn_user_email ON public.cmn_user (email) WHERE email IS NOT NULL;
 CREATE INDEX idx_cmn_user_user_type ON public.cmn_user (user_type);
 CREATE INDEX idx_cmn_user_valid ON public.cmn_user (valid);
+CREATE INDEX idx_cmn_user_edit_time ON public.cmn_user (edit_time DESC);
 
 -- 角色表：角色名称用于展示，role_code 用于程序内稳定标识（如鉴权点/网关透传）
 CREATE TABLE public.cmn_role (
@@ -95,17 +97,18 @@ CREATE TABLE public.cmn_role (
 );
 
 COMMENT ON TABLE public.cmn_role IS '角色表：角色编码 role_code 为稳定业务编码';
-COMMENT ON COLUMN public.cmn_role.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role.role_code IS '角色编码：如 ROLE_ADMIN、ROLE_OPERATOR';
 COMMENT ON COLUMN public.cmn_role.role_name IS '角色名称：用于页面展示';
 COMMENT ON COLUMN public.cmn_role.remark IS '备注';
 COMMENT ON COLUMN public.cmn_role.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
-COMMENT ON COLUMN public.cmn_role.creator IS '创建人 ID：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_role.editor IS '修改人 ID：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_role.edit_time IS '最后更新时间';
 
 CREATE INDEX idx_cmn_role_valid ON public.cmn_role (valid);
+CREATE INDEX idx_cmn_role_edit_time ON public.cmn_role (edit_time DESC);
 
 -- 码表（字典项）：同一 dict_type 下 dict_value 全局唯一；status=1 启用、0=停用
 CREATE TABLE public.cmn_dict (
@@ -145,6 +148,7 @@ CREATE UNIQUE INDEX uk_cmn_dict_type_value ON public.cmn_dict (dict_type, dict_v
 CREATE INDEX idx_cmn_dict_type ON public.cmn_dict (dict_type);
 CREATE INDEX idx_cmn_dict_status ON public.cmn_dict (status);
 CREATE INDEX idx_cmn_dict_parent_id ON public.cmn_dict (parent_id);
+CREATE INDEX idx_cmn_dict_edit_time ON public.cmn_dict (edit_time DESC);
 
 -- 角色-用户关联表：多对多；同一用户可绑定多个角色，同一角色下用户不重复
 CREATE TABLE public.cmn_role_user (
@@ -153,19 +157,18 @@ CREATE TABLE public.cmn_role_user (
     user_id            BIGINT         NOT NULL,
     create_time        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_cmn_role_user PRIMARY KEY (id),
-    CONSTRAINT uk_cmn_role_user_pair UNIQUE (role_id, user_id),
-    CONSTRAINT fk_cmn_role_user_role FOREIGN KEY (role_id) REFERENCES public.cmn_role (id),
-    CONSTRAINT fk_cmn_role_user_user FOREIGN KEY (user_id) REFERENCES public.cmn_user (id)
+    CONSTRAINT uk_cmn_role_user_pair UNIQUE (role_id, user_id)
 );
 
 COMMENT ON TABLE public.cmn_role_user IS '角色与用户关联：后台授权场景下将系统用户归入角色';
-COMMENT ON COLUMN public.cmn_role_user.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role_user.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role_user.role_id IS '角色 ID（cmn_role.id）';
 COMMENT ON COLUMN public.cmn_role_user.user_id IS '用户 ID（cmn_user.id）';
 COMMENT ON COLUMN public.cmn_role_user.create_time IS '绑定时间';
 
 CREATE INDEX idx_cmn_role_user_role_id ON public.cmn_role_user (role_id);
 CREATE INDEX idx_cmn_role_user_user_id ON public.cmn_role_user (user_id);
+CREATE INDEX idx_cmn_role_user_create_time ON public.cmn_role_user (create_time DESC);
 
 -- 菜单表：menu_code 作为前后端联动标识；支持目录/菜单/按钮三级（按 menu_type 区分）；route_path 支持 frame://、openwindow:// 等长 URL
 CREATE TABLE public.cmn_menu (
@@ -191,7 +194,7 @@ CREATE TABLE public.cmn_menu (
 );
 
 COMMENT ON TABLE public.cmn_menu IS '菜单表：支持目录/菜单/按钮，menu_code 为稳定业务编码';
-COMMENT ON COLUMN public.cmn_menu.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_menu.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_menu.parent_id IS '父菜单 ID：根节点可为 0 或 NULL';
 COMMENT ON COLUMN public.cmn_menu.menu_code IS '菜单编码：如 SYS_USER_LIST、SYS_USER_ADD';
 COMMENT ON COLUMN public.cmn_menu.menu_name IS '菜单名称';
@@ -202,14 +205,15 @@ COMMENT ON COLUMN public.cmn_menu.icon IS '菜单图标';
 COMMENT ON COLUMN public.cmn_menu.order_no IS '同级排序号，越小越靠前';
 COMMENT ON COLUMN public.cmn_menu.remark IS '备注';
 COMMENT ON COLUMN public.cmn_menu.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
-COMMENT ON COLUMN public.cmn_menu.creator IS '创建人 ID：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_menu.editor IS '修改人 ID：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_menu.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_menu.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_menu.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_menu.edit_time IS '最后更新时间';
 
 CREATE INDEX idx_cmn_menu_parent_id ON public.cmn_menu (parent_id);
 CREATE INDEX idx_cmn_menu_valid ON public.cmn_menu (valid);
 CREATE INDEX idx_cmn_menu_type ON public.cmn_menu (menu_type);
+CREATE INDEX idx_cmn_menu_edit_time ON public.cmn_menu (edit_time DESC);
 
 -- 全局按钮字典：菜单绑定时从本表选择；button_type=add|query|update|delete|other；不含 valid 字段
 CREATE TABLE public.cmn_button (
@@ -225,7 +229,7 @@ CREATE TABLE public.cmn_button (
 );
 
 COMMENT ON TABLE public.cmn_button IS '全局按钮字典：供菜单绑定选择；类型 add=新增 query=查询 update=修改 delete=删除 other=其他';
-COMMENT ON COLUMN public.cmn_button.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_button.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_button.button_type IS '按钮类型：add、query、update、delete、other';
 COMMENT ON COLUMN public.cmn_button.button_name IS '按钮名称（展示）';
 COMMENT ON COLUMN public.cmn_button.button_code IS '按钮编码（全局唯一，与前后端权限标识一致）';
@@ -250,25 +254,25 @@ CREATE TABLE public.cmn_menu_button (
     edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_cmn_menu_button PRIMARY KEY (id),
     CONSTRAINT uk_cmn_menu_button_menu_code UNIQUE (menu_id, button_code),
-    CONSTRAINT ck_cmn_menu_button_valid CHECK (valid IN (0, 1)),
-    CONSTRAINT fk_cmn_menu_button_menu FOREIGN KEY (menu_id) REFERENCES public.cmn_menu (id)
+    CONSTRAINT ck_cmn_menu_button_valid CHECK (valid IN (0, 1))
 );
 
 COMMENT ON TABLE public.cmn_menu_button IS '菜单按钮表：按钮权限实体，角色授权建议绑定到按钮';
-COMMENT ON COLUMN public.cmn_menu_button.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_menu_button.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_menu_button.menu_id IS '所属菜单 ID（cmn_menu.id）';
 COMMENT ON COLUMN public.cmn_menu_button.button_code IS '按钮编码：如 SYS_USER_ADD、SYS_USER_DELETE';
 COMMENT ON COLUMN public.cmn_menu_button.button_name IS '按钮名称：如 新增、删除、导出';
 COMMENT ON COLUMN public.cmn_menu_button.order_no IS '同菜单下排序号，越小越靠前';
 COMMENT ON COLUMN public.cmn_menu_button.remark IS '备注';
 COMMENT ON COLUMN public.cmn_menu_button.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
-COMMENT ON COLUMN public.cmn_menu_button.creator IS '创建人 ID：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_menu_button.editor IS '修改人 ID：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_menu_button.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_menu_button.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_menu_button.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_menu_button.edit_time IS '最后更新时间';
 
 CREATE INDEX idx_cmn_menu_button_menu_id ON public.cmn_menu_button (menu_id);
 CREATE INDEX idx_cmn_menu_button_valid ON public.cmn_menu_button (valid);
+CREATE INDEX idx_cmn_menu_button_edit_time ON public.cmn_menu_button (edit_time DESC);
 
 -- 按钮-API 绑定表：字段与 org.peach.common.mvc.util.ApiMeta 对齐（另保留 api_code 作稳定绑定键）
 CREATE TABLE public.cmn_button_api (
@@ -291,12 +295,11 @@ CREATE TABLE public.cmn_button_api (
     CONSTRAINT pk_cmn_button_api PRIMARY KEY (id),
     CONSTRAINT uk_cmn_button_api_pair UNIQUE (button_id, method, url_path),
     CONSTRAINT uk_cmn_button_api_api_code UNIQUE (button_id, api_code),
-    CONSTRAINT ck_cmn_button_api_valid CHECK (valid IN (0, 1)),
-    CONSTRAINT fk_cmn_button_api_button FOREIGN KEY (button_id) REFERENCES public.cmn_menu_button (id)
+    CONSTRAINT ck_cmn_button_api_valid CHECK (valid IN (0, 1))
 );
 
 COMMENT ON TABLE public.cmn_button_api IS '按钮-API 绑定表：定义按钮可调用的后端 API 集合（字段与 ApiMeta 一致）';
-COMMENT ON COLUMN public.cmn_button_api.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_button_api.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_button_api.button_id IS '按钮 ID（cmn_menu_button.id）';
 COMMENT ON COLUMN public.cmn_button_api.api_code IS 'API 编码：建议直接使用 /apis 返回的稳定编码';
 COMMENT ON COLUMN public.cmn_button_api.method IS 'HTTP 方法，对应 ApiMeta.method，如 GET、POST、ALL';
@@ -308,8 +311,8 @@ COMMENT ON COLUMN public.cmn_button_api.path_pattern IS 'PathPattern 表达式�
 COMMENT ON COLUMN public.cmn_button_api.service_name IS '所属服务名，对应 ApiMeta.serviceName';
 COMMENT ON COLUMN public.cmn_button_api.api_type IS '接口形态 admin/app/openapi，对应 ApiMeta.apiType';
 COMMENT ON COLUMN public.cmn_button_api.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
-COMMENT ON COLUMN public.cmn_button_api.creator IS '创建人 ID：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_button_api.editor IS '修改人 ID：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_button_api.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_button_api.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_button_api.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_button_api.edit_time IS '最后更新时间';
 
@@ -317,6 +320,7 @@ CREATE INDEX idx_cmn_button_api_button_id ON public.cmn_button_api (button_id);
 CREATE INDEX idx_cmn_button_api_method_path ON public.cmn_button_api (method, url_path);
 CREATE INDEX idx_cmn_button_api_service_name ON public.cmn_button_api (service_name);
 CREATE INDEX idx_cmn_button_api_valid ON public.cmn_button_api (valid);
+CREATE INDEX idx_cmn_button_api_edit_time ON public.cmn_button_api (edit_time DESC);
 
 -- 角色-按钮授权表：角色权限粒度落在按钮（不直接授权 API）
 CREATE TABLE public.cmn_role_button (
@@ -330,59 +334,20 @@ CREATE TABLE public.cmn_role_button (
     edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_cmn_role_button PRIMARY KEY (id),
     CONSTRAINT uk_cmn_role_button_pair UNIQUE (role_id, button_id),
-    CONSTRAINT ck_cmn_role_button_valid CHECK (valid IN (0, 1)),
-    CONSTRAINT fk_cmn_role_button_role FOREIGN KEY (role_id) REFERENCES public.cmn_role (id),
-    CONSTRAINT fk_cmn_role_button_button FOREIGN KEY (button_id) REFERENCES public.cmn_menu_button (id)
+    CONSTRAINT ck_cmn_role_button_valid CHECK (valid IN (0, 1))
 );
 
 COMMENT ON TABLE public.cmn_role_button IS '角色-按钮授权表：角色权限粒度到按钮';
-COMMENT ON COLUMN public.cmn_role_button.id IS '主键：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role_button.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role_button.role_id IS '角色 ID（cmn_role.id）';
 COMMENT ON COLUMN public.cmn_role_button.button_id IS '按钮 ID（cmn_menu_button.id）';
 COMMENT ON COLUMN public.cmn_role_button.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
-COMMENT ON COLUMN public.cmn_role_button.creator IS '创建人 ID：雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_role_button.editor IS '修改人 ID：雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role_button.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_role_button.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role_button.create_time IS '创建时间';
 COMMENT ON COLUMN public.cmn_role_button.edit_time IS '最后更新时间';
 
 CREATE INDEX idx_cmn_role_button_role_id ON public.cmn_role_button (role_id);
 CREATE INDEX idx_cmn_role_button_button_id ON public.cmn_role_button (button_id);
 CREATE INDEX idx_cmn_role_button_valid ON public.cmn_role_button (valid);
-
--- ========== 全局按钮字典种子（常见操作；幂等可重复执行 init_table 时先删表已清空，此处用固定 id）==========
-INSERT INTO public.cmn_button (id, button_type, button_name, button_code, sort_no, remark) VALUES
--- query
-(1970000000000000401, 'query', '查询', 'BTN_QUERY', 10, '列表条件检索'),
-(1970000000000000402, 'query', '重置', 'BTN_RESET', 20, '清空查询条件'),
-(1970000000000000403, 'query', '刷新', 'BTN_REFRESH', 30, '重新加载数据'),
-(1970000000000000404, 'query', '查看', 'BTN_VIEW', 40, '只读详情'),
-(1970000000000000405, 'query', '列设置', 'BTN_COLUMN_SETTING', 50, '表格列显隐'),
--- add
-(1970000000000000411, 'add', '新增', 'BTN_ADD', 110, '打开新增'),
-(1970000000000000412, 'add', '导入', 'BTN_IMPORT', 120, '批量导入'),
--- update
-(1970000000000000421, 'update', '编辑', 'BTN_EDIT', 210, '修改数据'),
-(1970000000000000422, 'update', '启用', 'BTN_ENABLE', 220, NULL),
-(1970000000000000423, 'update', '禁用', 'BTN_DISABLE', 230, NULL),
-(1970000000000000424, 'update', '保存', 'BTN_SAVE', 240, '表单保存/提交'),
-(1970000000000000425, 'update', '审核通过', 'BTN_AUDIT_PASS', 250, NULL),
-(1970000000000000426, 'update', '审核驳回', 'BTN_AUDIT_REJECT', 260, NULL),
-(1970000000000000427, 'update', '分配', 'BTN_ASSIGN', 270, NULL),
-(1970000000000000428, 'update', '重置密码', 'BTN_RESET_PASSWORD', 280, '用户管理常见'),
-(1970000000000000429, 'update', '解锁账号', 'BTN_UNLOCK', 290, NULL),
--- delete
-(1970000000000000431, 'delete', '删除', 'BTN_DELETE', 310, '单条删除'),
-(1970000000000000432, 'delete', '批量删除', 'BTN_BATCH_DELETE', 320, NULL),
--- other
-(1970000000000000441, 'other', '导出', 'BTN_EXPORT', 410, NULL),
-(1970000000000000442, 'other', '下载模板', 'BTN_DOWNLOAD_TEMPLATE', 420, '导入用模板'),
-(1970000000000000443, 'other', '复制', 'BTN_COPY', 430, '复制一条'),
-(1970000000000000444, 'other', '提交', 'BTN_SUBMIT', 440, '流程/表单提交'),
-(1970000000000000445, 'other', '撤回', 'BTN_REVOKE', 450, NULL),
-(1970000000000000446, 'other', '下载', 'BTN_DOWNLOAD', 460, '附件下载'),
-(1970000000000000447, 'other', '打印', 'BTN_PRINT', 470, NULL),
-(1970000000000000448, 'other', '取消', 'BTN_CANCEL', 480, '关闭/不保存'),
-(1970000000000000449, 'other', '授权角色', 'BTN_AUTH_ROLE', 490, '用户-角色'),
-(1970000000000000450, 'other', '分配菜单', 'BTN_BIND_MENU', 500, '角色-菜单/资源'),
-(1970000000000000451, 'other', '分配按钮', 'BTN_BIND_BUTTON', 510, '角色-按钮')
-ON CONFLICT (button_code) DO NOTHING;
+CREATE INDEX idx_cmn_role_button_edit_time ON public.cmn_role_button (edit_time DESC);
