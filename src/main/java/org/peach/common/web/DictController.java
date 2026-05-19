@@ -7,7 +7,7 @@ import org.peach.common.dto.DictPageQuery;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mybatis.model.vo.PageVO;
 import org.peach.common.mybatis.model.vo.SortVO;
-import org.peach.common.service.impl.DictServiceImpl;
+import org.peach.common.service.DictService;
 import org.peach.common.vo.DictVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,9 +35,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "码表配置", description = "分页、详情、保存、状态切换、物理删除")
 public class DictController {
 
-	private final DictServiceImpl service;
+	private final DictService service;
 
-	public DictController(DictServiceImpl service) {
+	public DictController(DictService service) {
 		this.service = service;
 	}
 

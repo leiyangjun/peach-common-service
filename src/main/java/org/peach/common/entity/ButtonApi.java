@@ -10,7 +10,7 @@ import org.peach.common.mybatis.annotation.LogicDelete;
 import org.peach.common.mybatis.annotation.TableName;
 
 /**
- * 按钮-API 绑定表实体；业务字段与 {@code org.peach.common.mvc.util.ApiMeta} 命名一致，并保留 {@code apiCode} 作为稳定绑定键。
+ * 按钮-API 绑定表实体；业务字段与 {@code org.peach.common.mvc.api.vo.ApiMeta} 命名一致，并保留 {@code apiCode} 作为稳定绑定键。
  *
  * @author leiyangjun
  */

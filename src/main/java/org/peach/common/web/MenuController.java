@@ -6,7 +6,7 @@ import java.util.List;
 import org.peach.common.mvc.api.context.annotation.AdminApi;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
-import org.peach.common.service.impl.MenuServiceImpl;
+import org.peach.common.service.MenuService;
 import org.peach.common.vo.MenuVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,9 +36,9 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/menu")
 @Tag(name = "Menu接口", description = "菜单 CRUD 与树查询")
-public class MenuController extends BaseController<MenuVO, MenuServiceImpl> {
+public class MenuController extends BaseController<MenuVO, MenuService> {
 
-	public MenuController(MenuServiceImpl service) {
+	public MenuController(MenuService service) {
 		super(service);
 	}
 

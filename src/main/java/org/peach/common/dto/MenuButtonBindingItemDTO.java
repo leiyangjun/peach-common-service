@@ -5,7 +5,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 import lombok.Data;
-import org.peach.common.mvc.util.ApiMeta;
+import org.peach.common.mvc.api.vo.ApiMeta;
 
 /**
  * 菜单保存时单条按钮绑定：字典主键 + 该按钮下 API 全量列表（与 {@link MenuButtonApiReplaceDTO} 语义一致）。

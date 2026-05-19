@@ -3,7 +3,7 @@ package org.peach.common.web;
 import org.peach.common.dto.ResetPwdDTO;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
-import org.peach.common.service.impl.UserServiceImpl;
+import org.peach.common.service.UserService;
 import org.peach.common.vo.UserVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,9 +26,9 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/user")
 @Tag(name = "用户管理", description = "分页、详情、保存返回 id、切换有效、重置密码、系统用户物理删除")
-public class UserController extends BaseController<UserVO, UserServiceImpl> {
+public class UserController extends BaseController<UserVO, UserService> {
 
-	public UserController(UserServiceImpl service) {
+	public UserController(UserService service) {
 		super(service);
 	}
 

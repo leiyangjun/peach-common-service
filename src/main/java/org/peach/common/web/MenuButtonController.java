@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.peach.common.vo.MenuButtonVO;
-import org.peach.common.service.impl.MenuButtonServiceImpl;
+import org.peach.common.service.MenuButtonService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -17,9 +17,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/cmn/menu/button")
 @Tag(name = "MenuButton接口", description = "依据代码生成，可改")
-public class MenuButtonController extends BaseController<MenuButtonVO, MenuButtonServiceImpl> {
+public class MenuButtonController extends BaseController<MenuButtonVO, MenuButtonService> {
 
-	public MenuButtonController(MenuButtonServiceImpl service) {
+	public MenuButtonController(MenuButtonService service) {
 		super(service);
 	}
 }

@@ -2,8 +2,8 @@ package org.peach.common.vo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import org.peach.common.mvc.annotation.json.Sensitive;
-import org.peach.common.mvc.annotation.json.SensitiveType;
+import org.peach.common.mvc.json.annotation.Sensitive;
+import org.peach.common.mvc.json.annotation.SensitiveType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;

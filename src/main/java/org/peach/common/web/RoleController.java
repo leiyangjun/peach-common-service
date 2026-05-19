@@ -5,7 +5,7 @@ import java.util.List;
 import org.peach.common.dto.BindRoleUsersDTO;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
-import org.peach.common.service.impl.RoleServiceImpl;
+import org.peach.common.service.RoleService;
 import org.peach.common.vo.RoleVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,9 +32,9 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/role")
 @Tag(name = "角色管理", description = "分页、保存、物理删除、绑定用户")
-public class RoleController extends BaseController<RoleVO, RoleServiceImpl> {
+public class RoleController extends BaseController<RoleVO, RoleService> {
 
-	public RoleController(RoleServiceImpl service) {
+	public RoleController(RoleService service) {
 		super(service);
 	}
 

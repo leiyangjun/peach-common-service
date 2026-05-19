@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.peach.common.vo.RoleButtonVO;
-import org.peach.common.service.impl.RoleButtonServiceImpl;
+import org.peach.common.service.RoleButtonService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -17,9 +17,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @RestController
 @RequestMapping("/api/cmn/role/button")
 @Tag(name = "RoleButton接口", description = "依据代码生成，可改")
-public class RoleButtonController extends BaseController<RoleButtonVO, RoleButtonServiceImpl> {
+public class RoleButtonController extends BaseController<RoleButtonVO, RoleButtonService> {
 
-	public RoleButtonController(RoleButtonServiceImpl service) {
+	public RoleButtonController(RoleButtonService service) {
 		super(service);
 	}
 }

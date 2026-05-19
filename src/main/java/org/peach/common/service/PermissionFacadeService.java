@@ -36,7 +36,7 @@ import org.peach.common.mapper.RoleUserMapper;
 import org.peach.common.mybatis.code.CrudBizCode;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mvc.exception.BizException;
-import org.peach.common.mvc.util.ApiMeta;
+import org.peach.common.mvc.api.vo.ApiMeta;
 import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.IdUtil;
 import org.peach.common.utils.LoginUserUtil;

@@ -7,7 +7,7 @@ import org.peach.common.dto.MenuButtonReplaceDTO;
 import org.peach.common.dto.RoleMenuButtonReplaceDTO;
 import org.peach.common.entity.ButtonDict;
 import org.peach.common.mvc.result.ApiResult;
-import org.peach.common.mvc.util.ApiMeta;
+import org.peach.common.mvc.api.vo.ApiMeta;
 import org.peach.common.service.PermissionFacadeService;
 import org.peach.common.vo.CurrentUserPermissionVO;
 import org.peach.common.vo.MenuButtonPickerRowVO;

@@ -274,7 +274,7 @@ CREATE INDEX idx_cmn_menu_button_menu_id ON public.cmn_menu_button (menu_id);
 CREATE INDEX idx_cmn_menu_button_valid ON public.cmn_menu_button (valid);
 CREATE INDEX idx_cmn_menu_button_edit_time ON public.cmn_menu_button (edit_time DESC);
 
--- 按钮-API 绑定表：字段与 org.peach.common.mvc.util.ApiMeta 对齐（另保留 api_code 作稳定绑定键）
+-- 按钮-API 绑定表：字段与 org.peach.common.mvc.api.vo.ApiMeta 对齐（另保留 api_code 作稳定绑定键）
 CREATE TABLE public.cmn_button_api (
     id                 BIGINT         NOT NULL,
     button_id          BIGINT         NOT NULL,

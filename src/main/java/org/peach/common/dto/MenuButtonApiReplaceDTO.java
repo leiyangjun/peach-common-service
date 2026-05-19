@@ -5,7 +5,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 import lombok.Data;
-import org.peach.common.mvc.util.ApiMeta;
+import org.peach.common.mvc.api.vo.ApiMeta;
 
 /**
  * 全量覆盖某菜单按钮实例上的 API 绑定。
