@@ -42,7 +42,7 @@
 		<dependency>
 			<groupId>org.peach.common</groupId>
 			<artifactId>peach-common-start</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0.0.0</version>
 		</dependency>
 		<!-- 与 peach-auth-service 一致：系统用户口令 BCrypt 摘要 -->
 		<dependency>

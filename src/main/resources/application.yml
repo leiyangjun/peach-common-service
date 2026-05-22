@@ -1,55 +1,14 @@
-# =============================================================================
-# peach-common-service 精简配置（配合 peach-common-start 平台默认项）
-# =============================================================================
-# 激活方式（任选其一）：
-#   1. 独立启动（推荐，不加载 application.yml 中的重复项）：
-#        SPRING_CONFIG_LOCATION=classpath:/application-simplified.yml
-#      或 JVM：-Dspring.config.location=classpath:/application-simplified.yml
-#   2. Profile 叠加（与 application.yml 合并，同名 key 以本文件为准）：
-#        SPRING_PROFILES_ACTIVE=simplified
-#      或 JVM：-Dspring.profiles.active=simplified
-#
-# 必填环境变量（无默认 IP/账号，与 starter 约定一致）：
-#   NACOS_SERVER_ADDR、NACOS_USERNAME、NACOS_PASSWORD
-#   DB_URL、DB_USERNAME、DB_PASSWORD
-#
-# 必填：spring.profiles.active（或由 SPRING_PROFILES_ACTIVE 传入；Starter 不设默认 profile）
-# dev vs test：
-#   - dev：可省略 server.port，starter 在 7000-8000 随机分配（本文件写死 8083 时与 test 相同，见 application-simplified.yml）
-#   - test：固定 8083；Nacos namespace=test；日志降噪但保留启动 INFO（见 application-test.yml / logback-spring.xml）
-# 可选：NACOS_NAMESPACE（非空优先；未配置时依赖已解析的 spring.profiles.active，由 starter 早期注入 namespace）
-#       NACOS_GROUP / NACOS_CONFIG_GROUP（默认 DEFAULT_GROUP，starter 已处理）
-#       关闭 Nacos：spring.cloud.nacos.discovery.enabled=false / config.enabled=false
-# =============================================================================
-
 server:
-  # dev 环境可省略 port，由 starter 在 7000-8000 随机分配
-  port: 8083
-  # 写入 Nacos 实例元数据 server.description，供网关 Swagger 门户展示
-  description: 菜单，权限用户等管理3
-
+  port: 8082
+  description: 菜单，权限用户等管理
 spring:
   application:
     name: peach-common-service
-    # ApiResult 等业务码前缀（四位模块编码，必填）
     module-code: COMM
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}  # 下游必填；本地可写 dev/test（Starter 不设置默认 profile）
+    active: dev
   cloud:
     nacos:
       server-addr: ${NACOS_SERVER_ADDR:192.168.99.100:8848}
       username: ${NACOS_USERNAME:nacos}
       password: ${NACOS_PASSWORD:nacos}
-  # 方案 A：单库，关闭读写分离（rw 路由由 peach-common-start 接管）
-  datasource:
-    url: ${DB_READ_URL:jdbc:postgresql://192.168.99.101:5432/peach_common?currentSchema=public}
-    username: ${DB_READ_USERNAME:postgres}
-    password: ${DB_READ_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-
-# starter 未集成 management；保留 health/info 供本地与网关探活
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
