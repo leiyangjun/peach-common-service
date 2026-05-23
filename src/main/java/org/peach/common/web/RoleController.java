@@ -1,12 +1,12 @@
 package org.peach.common.web;
 
 import java.util.List;
-
-import org.peach.common.dto.BindRoleUsersDTO;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
 import org.peach.common.service.RoleService;
+import org.peach.common.vo.RoleUserVO;
 import org.peach.common.vo.RoleVO;
+import org.peach.common.vo.UserVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -39,26 +38,26 @@ public class RoleController extends BaseController<RoleVO, RoleService> {
 	}
 
 	@Operation(summary = "物理删除角色", description = "删除角色行及关联的菜单/按钮/用户绑定数据")
-	@DeleteMapping("/{id}/hard")
-	public ApiResult<Void> hardDelete(
-			@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
-		service.hardDelete(id);
+	@DeleteMapping("/{id}")
+	public ApiResult<Void> deleteRoleById(
+		@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
+		service.deleteRoleById(id);
 		return ApiResult.ok();
 	}
 
-	@Operation(summary = "查询角色已绑定用户主键列表", description = "用于管理端初始化多选状态")
-	@GetMapping("/{id}/user-ids")
-	public ApiResult<List<Long>> listUserIds(
-			@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
-		return ApiResult.ok(service.listUserIds(id));
+	@Operation(summary = "获取该角色下所有用户列表", description = "用于管理端初始化多选状态")
+	@GetMapping("/{roleId}/user")
+	public ApiResult<List<UserVO>> listUserIds(
+		@Parameter(name = "roleId", required = true, in = ParameterIn.PATH) @PathVariable Long roleId) {
+		return ApiResult.ok(service.getUserByRoleId(roleId));
 	}
 
-	@Operation(summary = "全量替换角色下的用户绑定", description = "请求体 userIds 为空数组表示清空绑定")
-	@PutMapping("/{id}/users")
+	@Operation(summary = "全量绑定用户", description = "请求体 userIds 为空数组表示清空绑定")
+	@PutMapping("/{roleId}/users")
 	public ApiResult<Void> replaceUsers(
-			@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id,
-			@Valid @RequestBody BindRoleUsersDTO body) {
-		service.replaceRoleUsers(id, body);
+		@Parameter(name = "roleId", required = true, in = ParameterIn.PATH) @PathVariable Long roleId,
+		@Valid @RequestBody List<RoleUserVO> users) {
+		service.bindUser(roleId, users);
 		return ApiResult.ok();
 	}
 }

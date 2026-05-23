@@ -1,9 +1,10 @@
 package org.peach.common.service;
 
 import java.util.List;
-import org.peach.common.dto.BindRoleUsersDTO;
-import org.peach.common.vo.RoleVO;
 import org.peach.common.mybatis.service.BaseInterfaceService;
+import org.peach.common.vo.RoleUserVO;
+import org.peach.common.vo.RoleVO;
+import org.peach.common.vo.UserVO;
 
 /**
  * 角色管理：分页、详情、持久化、物理删除、用户绑定。
@@ -11,30 +12,23 @@ import org.peach.common.mybatis.service.BaseInterfaceService;
 public interface RoleService extends BaseInterfaceService<RoleVO> {
 
 	/**
-	 * 新增或修改：{@code id == null} 或 {@code id <= 0} 为新增；返回主键。
- *
- * @author leiyangjun
- */
-	Long persist(RoleVO vo);
-
-	/**
 	 * 物理删除角色及其菜单/按钮/用户关联行。
- *
- * @author leiyangjun
- */
-	void hardDelete(Long id);
+	 *
+	 * @author leiyangjun
+	 */
+	void deleteRoleById(Long id);
 
 	/**
 	 * 查询当前绑定在该角色下的用户主键列表（顺序稳定，便于前端初始化勾选）。
- *
- * @author leiyangjun
- */
-	List<Long> listUserIds(Long roleId);
+	 *
+	 * @author leiyangjun
+	 */
+	List<UserVO> getUserByRoleId(Long roleId);
 
 	/**
 	 * 全量替换角色下的用户绑定。
- *
- * @author leiyangjun
- */
-	void replaceRoleUsers(Long roleId, BindRoleUsersDTO dto);
+	 *
+	 * @author leiyangjun
+	 */
+	void bindUser(Long roleId, List<RoleUserVO> users);
 }

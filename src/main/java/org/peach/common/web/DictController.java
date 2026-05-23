@@ -2,10 +2,9 @@ package org.peach.common.web;
 
 import java.io.Serializable;
 import java.util.List;
-
-import org.peach.common.dto.DictPageQuery;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mybatis.model.vo.PageVO;
+import org.peach.common.mybatis.model.vo.SearchVO;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.service.DictService;
 import org.peach.common.vo.DictVO;
@@ -16,10 +15,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.github.pagehelper.PageInfo;
-
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -44,42 +42,56 @@ public class DictController {
 	@Operation(summary = "根据主键查询详情")
 	@GetMapping("/{id}")
 	public ApiResult<DictVO> getById(
-			@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
+		@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
 		return ApiResult.ok(service.getById(id));
 	}
 
-	@Operation(summary = "分页查询", description = "查询参数见 DictPageQuery：searchValue（类型/标签/存储值 OR 模糊）、listStatusFlag（null=全部，0=停用，1=启用）")
+	@Operation(summary = "分页查询--供管理界面",
+		description = "查询参数见 DictPageQuery：searchValue（类型/标签/存储值 OR 模糊）、listStatusFlag（null=全部，0=停用，1=启用）")
 	@GetMapping("/page")
-	public ApiResult<PageInfo<DictVO>> page(@ModelAttribute DictPageQuery query, PageVO page, SortVO sort) {
-		return ApiResult.ok(service.listPage(query, page, sort));
+	public ApiResult<PageInfo<DictVO>> page(@RequestParam(name = "status", required = false) Short status,
+		@ModelAttribute SearchVO search, PageVO page, SortVO sort) {
+		DictVO dictVO = new DictVO();
+		if (status != null) {
+			dictVO.setStatus(status);
+		}
+		return ApiResult.ok(service.listPage(dictVO, search, page, sort));
 	}
 
 	/** 列出库中已存在的字典类型（去重），供新增/编辑抽屉表单下拉 */
 	@Operation(summary = "字典类型列表", description = "返回 cmn_dict 中不重复且非空的 dict_type（字典序），供新增/编辑抽屉表单下拉")
 	@GetMapping("/types")
 	public ApiResult<List<String>> types() {
-		return ApiResult.ok(service.listDistinctTypes());
+		return ApiResult.ok(service.getDictTypes());
 	}
 
 	@Operation(summary = "保存或更新", description = "新增勿带主键；更新须带主键。响应 data 为主键。")
 	@PostMapping
-	public ApiResult<Serializable> save(
-			@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "DictVO JSON", required = true) @RequestBody DictVO body) {
+	public ApiResult<Serializable> save(@io.swagger.v3.oas.annotations.parameters.RequestBody(
+		description = "DictVO JSON", required = true) @RequestBody DictVO body) {
 		return ApiResult.ok(service.save(body));
 	}
 
 	@Operation(summary = "切换启用状态", description = "在 status=1 与 0 之间切换，返回切换后的值")
 	@PostMapping("/{id}/toggle-status")
-	public ApiResult<Short> toggleStatus(
-			@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
-		return ApiResult.ok(service.toggleStatus(id));
+	public ApiResult<Void> switchStatus(
+		@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
+		service.switchStatus(id);
+		return ApiResult.ok();
 	}
 
 	@Operation(summary = "物理删除", description = "从库表永久删除该行")
-	@DeleteMapping("/{id}/hard")
+	@DeleteMapping("/{id}")
 	public ApiResult<Void> hardDelete(
-			@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
-		service.hardDelete(id);
+		@Parameter(name = "id", required = true, in = ParameterIn.PATH) @PathVariable Long id) {
+		service.deleteDictByKey(id);
 		return ApiResult.ok();
+	}
+
+	@Operation(summary = "根据字典类型获取有效字典数据--供前端使用选项数据匹配label类似")
+	@GetMapping("/{dictType}")
+	public ApiResult<List<DictVO>> getByDictType(
+		@Parameter(name = "dictType", required = true, in = ParameterIn.PATH) @PathVariable String dictType) {
+		return ApiResult.ok(service.getByDictType(dictType));
 	}
 }

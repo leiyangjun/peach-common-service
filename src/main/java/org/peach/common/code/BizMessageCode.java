@@ -165,25 +165,7 @@ public final class BizMessageCode {
 	public enum Dict implements MessageCode {
 
 		/** 码表项不存在 */
-		DICT_NOT_FOUND(4130, "码表项不存在"),
-
-		/** 类型 + 存储值已存在 */
-		DICT_TYPE_VALUE_EXISTS(4131, "该字典类型下存储值已存在"),
-
-		/** 字典类型不能为空 */
-		DICT_TYPE_REQUIRED(4132, "字典类型不能为空"),
-
-		/** 存储值不能为空 */
-		DICT_VALUE_REQUIRED(4133, "存储值不能为空"),
-
-		/** 字典标签不能为空 */
-		DICT_LABEL_REQUIRED(4134, "字典标签不能为空"),
-
-		/** 类型 + 存储值冲突（更新时） */
-		DICT_TYPE_VALUE_CONFLICT(4135, "该字典类型下存储值已被占用"),
-
-		/** 物理删除失败 */
-		DICT_HARD_DELETE_FAILED(4137, "物理删除失败，请刷新后重试");
+		DICT_NOT_FOUND(4130, "码表项不存在");
 
 		private final int code;
 		private final String msg;

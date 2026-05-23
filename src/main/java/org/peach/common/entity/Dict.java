@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.Date;
 import lombok.Data;
 import org.peach.common.mybatis.annotation.ID;
+import org.peach.common.mybatis.annotation.LogicDelete;
 import org.peach.common.mybatis.annotation.SearchValue;
 import org.peach.common.mybatis.annotation.TableName;
 
@@ -41,9 +42,11 @@ public class Dict implements Serializable {
 	private Integer sortNo;
 
 	@Schema(description = "状态：1=启用 0=停用")
+	@LogicDelete()
 	private Short status;
 
 	@Schema(description = "备注")
+	@SearchValue
 	private String remark;
 
 	@Schema(description = "父级主键，0 表示根节点")

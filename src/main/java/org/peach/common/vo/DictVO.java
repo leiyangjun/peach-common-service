@@ -1,6 +1,8 @@
 package org.peach.common.vo;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
@@ -21,18 +23,22 @@ public class DictVO implements Serializable {
 	private Long id;
 
 	@Schema(description = "字典类型/分组编码")
+	@NotBlank
 	private String dictType;
 
 	@Schema(description = "展示标签")
+	@NotBlank
 	private String dictLabel;
 
 	@Schema(description = "存储值")
+	@NotBlank
 	private String dictValue;
 
 	@Schema(description = "排序号")
 	private Integer sortNo;
 
 	@Schema(description = "状态：1 启用 0 停用")
+	@NotNull
 	private Short status;
 
 	@Schema(description = "备注")
