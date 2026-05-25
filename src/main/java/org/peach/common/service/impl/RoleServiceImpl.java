@@ -1,8 +1,13 @@
 package org.peach.common.service.impl;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.peach.common.entity.Button;
 import org.peach.common.entity.Menu;
 import org.peach.common.entity.MenuButton;
 import org.peach.common.entity.Role;
@@ -18,13 +23,15 @@ import org.peach.common.mapper.RoleUserMapper;
 import org.peach.common.mapper.UserMapper;
 import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
-import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.RoleService;
 import org.peach.common.utils.BeanUtil;
-import org.peach.common.utils.UserContext;
 import org.peach.common.utils.TreeUtil;
-import org.peach.common.vo.MenuVO;
+import org.peach.common.utils.UserContext;
+import org.peach.common.vo.ButtonUserVO;
+import org.peach.common.vo.MenuButtonRoleVO;
+import org.peach.common.vo.MenuTreeRoleVO;
+import org.peach.common.vo.MenuTreeUserVO;
 import org.peach.common.vo.RoleUserVO;
 import org.peach.common.vo.RoleVO;
 import org.peach.common.vo.UserVO;
@@ -110,30 +117,108 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 	}
 
 	@Override
-	public List<MenuVO> getMenusByUserId() {
-		List<MenuVO> lastResult=null;
-		SortVO sortVO=new SortVO();
-		sortVO.setSortName("sortNo");
-		sortVO.setSortName("ASC");
+	public List<MenuTreeUserVO> getMenusByUserId() {
 		Long userId = UserContext.getUserId();
 		String userName = UserContext.getUsername(); // 超级管理员时，查询所有有效菜单，并按序号进行排序
+
+		List<MenuTreeUserVO> resultList = new ArrayList<MenuTreeUserVO>();
 		if (ADMIN_USER.equals(userName)) {
-			List<Menu> menus = menuMapper.selectByLambda(LambdaSelect.of(Menu.class).valid().sort(null));
-			lastResult= TreeUtil.tree(BeanUtil.copyList(menus, MenuVO.class), MenuVO.class);
-		} else { 
+			List<Menu> menus =
+				menuMapper.selectByLambda(LambdaSelect.of(Menu.class).valid().orderByAsc(Menu::getOrderNo));
+			resultList = BeanUtil.copyList(menus, MenuTreeUserVO.class);
+		} else {
 			// 其他的按角色去查询通过UserId--》roleId--》roleIdButtons
 			List<RoleUser> roleUserList =
 				roleUserMapper.selectByLambda(LambdaSelect.of(RoleUser.class).eq(RoleUser::getUserId, userId));
-			List<Long> roleIds=roleUserList.stream().map(RoleUser::getRoleId).collect(Collectors.toList());
-			List<RoleButton> roleBtnList=this.roleButtonMapper.selectByLambda(LambdaSelect.of(RoleButton.class).in(RoleButton::getRoleId, roleIds));
-			List<Long> buttonIds=roleBtnList.stream().map(RoleButton::getButtonId).collect(Collectors.toList());
-			List<MenuButton> menuButtons= menuButtonMapper.selectByLambda(LambdaSelect.of(MenuButton.class).in(MenuButton::getId, buttonIds));
-			
-			List<Long> menuIds=menuButtons.stream().map(MenuButton::getMenuId).collect(Collectors.toList());
-			List<Menu> menus = menuMapper.selectByLambda(LambdaSelect.of(Menu.class).valid().in(Menu::getId, menuIds).sort(null));
-			
-			lastResult= TreeUtil.tree(BeanUtil.copyList(menus, MenuVO.class), MenuVO.class);
+			List<Long> roleIds = roleUserList.stream().map(RoleUser::getRoleId).collect(Collectors.toList());
+			List<RoleButton> roleBtnList = this.roleButtonMapper
+				.selectByLambda(LambdaSelect.of(RoleButton.class).in(RoleButton::getRoleId, roleIds));
+			// 获取所有角色按钮信息，查询出所有的按钮信息
+			List<Long> buttonIds = roleBtnList.stream().map(RoleButton::getButtonId).collect(Collectors.toList());
+			List<Button> buttons =
+				buttonMapper.selectByLambda(LambdaSelect.of(Button.class).in(Button::getId, buttonIds));
+			Map<Long, Button> mapButton =
+				buttons.stream().collect(Collectors.toMap(Button::getId, Function.identity()));
+
+			List<Long> menuIds = roleBtnList.stream().map(RoleButton::getMenuId).collect(Collectors.toList());
+			// 原始菜单信息
+			List<Menu> menus = menuMapper.selectByLambda(
+				LambdaSelect.of(Menu.class).valid().in(Menu::getId, menuIds).orderByAsc(Menu::getOrderNo));
+
+			Map<Long, Menu> mapMenu = menus.stream().collect(Collectors.toMap(Menu::getId, Function.identity()));
+
+			Map<Long, List<Long>> menuButtonIdMap =
+				roleBtnList.stream().collect(Collectors.groupingBy(RoleButton::getMenuId, // 按 menuId 分组
+					Collectors.mapping(RoleButton::getButtonId, Collectors.toList()) // 将 buttonId 收集成 List
+				));
+			resultList = mapMenu.values().stream().map(menu -> {
+				MenuTreeUserVO vo = new MenuTreeUserVO();
+				// 拷贝菜单属性（可使用 BeanUtils 或手动 set）
+				BeanUtil.copyProperties(menu, vo); // 需确保 Menu 与 MenuButtonVO 字段名匹配
+				// 获取当前菜单下的按钮 ID 列表，若无则空列表
+				List<Long> buttonIdTemps = menuButtonIdMap.getOrDefault(menu.getId(), Collections.emptyList());
+				// 根据 ID 列表从 mapButton 中取出按钮（过滤掉不存在的 ID）
+				List<Button> buttonTemps = buttonIdTemps.stream().map(mapButton::get).collect(Collectors.toList());
+				vo.setButtons(BeanUtil.copyList(buttonTemps, ButtonUserVO.class));
+				return vo;
+			}).collect(Collectors.toList());
 		}
-		return lastResult;
+		resultList.stream().forEach(e -> e.setAdmin(ADMIN_USER.equals(userName)));
+		return TreeUtil.tree(resultList, MenuTreeUserVO.class);
+	}
+
+	@Override
+	public void saveRoleMenuButton(Long roleId, List<MenuTreeRoleVO> menuTreeRoleVOs) {
+		List<MenuTreeRoleVO> tempVOs = TreeUtil.flatten(menuTreeRoleVOs, MenuTreeRoleVO.class, true);
+		List<MenuButtonRoleVO> roleButtons = new ArrayList<MenuButtonRoleVO>();
+		tempVOs.stream().forEach(e -> roleButtons.addAll(e.getButtonRoleVOs()));
+
+		List<MenuButtonRoleVO> lastRoleButtons =
+			roleButtons.stream().filter(e -> e.getPermission()).collect(Collectors.toList());
+
+		// 先删除角色下的权限
+		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getRoleId, roleId));
+		if (!CollectionUtils.isEmpty(lastRoleButtons)) {
+			this.roleButtonMapper.batchInsertBase(BeanUtil.copyList(lastRoleButtons, RoleButton.class));
+		}
+	}
+
+	@Override
+	public List<MenuTreeRoleVO> getMenusByRoleId(Long roleId) {
+		// 第一步得到所有的有效菜单
+
+		// 得到所有的菜单对应按钮信息
+		List<Menu> menus = menuMapper.selectByLambda(LambdaSelect.of(Menu.class).valid().orderByAsc(Menu::getOrderNo));
+
+		List<Long> menuIds = menus.stream().map(Menu::getId).collect(Collectors.toList());
+
+		// 得到所有按钮
+		List<MenuButton> menuButtons =
+			menuButtonMapper.selectByLambda(LambdaSelect.of(MenuButton.class).in(MenuButton::getMenuId, menuIds));
+		List<MenuButtonRoleVO> buttonRoleVOs = BeanUtil.copyList(menuButtons, MenuButtonRoleVO.class);
+
+		// 得到选中的按钮
+		List<RoleButton> roleButtons =
+			roleButtonMapper.selectByLambda(LambdaSelect.of(RoleButton.class).eq(RoleButton::getRoleId, roleId));
+		Map<String, List<RoleButton>> map =
+			roleButtons.stream().collect(Collectors.groupingBy(dto -> dto.getMenuId() + ":" + dto.getButtonId()));
+		buttonRoleVOs.stream().forEach(brVO -> {
+			brVO.setRoleId(roleId);
+			if (map.containsKey(brVO.getMenuId() + ":" + brVO.getButtonId())) {
+				brVO.setPermission(Boolean.TRUE);
+			} else {
+				brVO.setPermission(Boolean.FALSE);
+			}
+		});
+		// 将所有的菜单按钮根据 菜单ID分组得到Map<menuID,List<MenuButton>>
+		List<MenuTreeRoleVO> menuTreeRoleVOs = BeanUtil.copyList(menus, MenuTreeRoleVO.class);
+
+		Map<Long, List<MenuButtonRoleVO>> mapTemp =
+			buttonRoleVOs.stream().collect(Collectors.groupingBy(MenuButtonRoleVO::getMenuId));
+
+		menuTreeRoleVOs.stream().forEach(ee -> {
+			ee.setButtonRoleVOs(mapTemp.get(ee.getId()));
+		});
+		return TreeUtil.tree(menuTreeRoleVOs, MenuTreeRoleVO.class);
 	}
 }

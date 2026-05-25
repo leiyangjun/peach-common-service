@@ -4,13 +4,15 @@ import java.util.List;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
 import org.peach.common.service.RoleService;
-import org.peach.common.vo.MenuVO;
+import org.peach.common.vo.MenuTreeRoleVO;
+import org.peach.common.vo.MenuTreeUserVO;
 import org.peach.common.vo.RoleUserVO;
 import org.peach.common.vo.RoleVO;
 import org.peach.common.vo.UserVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,9 +64,25 @@ public class RoleController extends BaseController<RoleVO, RoleService> {
 		return ApiResult.ok();
 	}
 
-	@Operation(summary = "获取当前用户的菜单树（所具备权限的菜单树）--管理员权限群组获取所有有效菜单")
+	@Operation(summary = "获取角色绑定菜单数据--点击绑定菜单按钮时调用")
+	@GetMapping("/menus/{roleId}")
+	public ApiResult<List<MenuTreeRoleVO>> getMenusByRoleId(
+		@Parameter(name = "roleId", required = true, in = ParameterIn.PATH) @PathVariable("roleId") Long roleId) {
+		return ApiResult.ok(service.getMenusByRoleId(roleId));
+	}
+
+	@Operation(summary = "获取角色绑定菜单数据保存数据--点击绑定菜单提交时调用")
+	@PostMapping("/menus/{roleId}")
+	public ApiResult<Void> saveRoleMenuButton(
+		@Parameter(name = "roleId", required = true, in = ParameterIn.PATH) @PathVariable Long roleId,
+		@RequestBody List<MenuTreeRoleVO> menuTreeRoleVOs) {
+		service.saveRoleMenuButton(roleId, menuTreeRoleVOs);
+		return ApiResult.ok();
+	}
+
+	@Operation(summary = "获取当前用户的菜单树（所具备权限的菜单树）用于登陆后端成功后调用--管理员权限群组获取所有有效菜单")
 	@GetMapping("/user/menus")
-	public ApiResult<List<MenuVO>> getMenusByUserId() {
+	public ApiResult<List<MenuTreeUserVO>> getMenusByUserId() {
 		return ApiResult.ok(service.getMenusByUserId());
 	}
 

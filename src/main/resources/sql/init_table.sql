@@ -333,7 +333,6 @@ CREATE TABLE public.cmn_role_button (
     create_time        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_cmn_role_button PRIMARY KEY (id),
-    CONSTRAINT uk_cmn_role_button_pair UNIQUE (role_id, button_id),
     CONSTRAINT ck_cmn_role_button_valid CHECK (valid IN (0, 1))
 );
 

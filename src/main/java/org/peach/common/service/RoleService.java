@@ -2,8 +2,8 @@ package org.peach.common.service;
 
 import java.util.List;
 import org.peach.common.mybatis.service.BaseInterfaceService;
-import org.peach.common.vo.ButtonVO;
-import org.peach.common.vo.MenuVO;
+import org.peach.common.vo.MenuTreeRoleVO;
+import org.peach.common.vo.MenuTreeUserVO;
 import org.peach.common.vo.RoleUserVO;
 import org.peach.common.vo.RoleVO;
 import org.peach.common.vo.UserVO;
@@ -33,9 +33,37 @@ public interface RoleService extends BaseInterfaceService<RoleVO> {
 	 * @author leiyangjun
 	 */
 	void bindUser(Long roleId, List<RoleUserVO> users);
-	
-	
-	List<MenuVO> getMenusByUserId();
-	
+
+	/**
+	 * 
+	 * @Title: getMenusByUserId
+	 * @Description: 获取当前用户有效菜单树能够查看的
+	 * @param: @return
+	 * @return: List<MenuVO>
+	 * @throws
+	 */
+	List<MenuTreeUserVO> getMenusByUserId();
+
+	/**
+	 * 
+	 * @Title: getMenusByUserId
+	 * @Description: 点击绑定菜单获取数据
+	 * @param: @return
+	 * @return: List<MenuVO>
+	 * @throws
+	 */
+	List<MenuTreeRoleVO> getMenusByRoleId(Long roleId);
+
+	void saveRoleMenuButton(Long roleId, List<MenuTreeRoleVO> menuTreeRoleVO);
+
+	/**
+	 * 
+	 * @Title: getButtonsByMenuId
+	 * @Description: 获取当前用户当前点击菜单能够显示的按钮的
+	 * @param: @param menuId
+	 * @param: @return
+	 * @return: List<String>
+	 * @throws
+	 */
 	List<String> getButtonsByMenuId(Long menuId);
 }
