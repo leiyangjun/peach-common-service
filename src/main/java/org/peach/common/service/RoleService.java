@@ -2,6 +2,7 @@ package org.peach.common.service;
 
 import java.util.List;
 import org.peach.common.mybatis.service.BaseInterfaceService;
+import org.peach.common.vo.MenuButtonRoleVO;
 import org.peach.common.vo.MenuTreeRoleVO;
 import org.peach.common.vo.MenuTreeUserVO;
 import org.peach.common.vo.RoleUserVO;
@@ -54,16 +55,10 @@ public interface RoleService extends BaseInterfaceService<RoleVO> {
 	 */
 	List<MenuTreeRoleVO> getMenusByRoleId(Long roleId);
 
-	void saveRoleMenuButton(Long roleId, List<MenuTreeRoleVO> menuTreeRoleVO);
-
 	/**
-	 * 
-	 * @Title: getButtonsByMenuId
-	 * @Description: 获取当前用户当前点击菜单能够显示的按钮的
-	 * @param: @param menuId
-	 * @param: @return
-	 * @return: List<String>
-	 * @throws
+	 * 全量保存角色菜单按钮授权：请求体为扁平 {@link MenuButtonRoleVO} 列表（仅 permission=true）；
+	 * 空列表表示清空该角色全部按钮授权。
 	 */
-	List<String> getButtonsByMenuId(Long menuId);
+	void saveRoleMenuButton(Long roleId, List<MenuButtonRoleVO> menuButtonRoleVOs);
+
 }

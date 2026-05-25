@@ -2,7 +2,7 @@
 spring:
   application:
     name: peach-common-service
-    module-code: SVC1
+    module-code: COMM
   cloud:
     nacos:
       discovery:

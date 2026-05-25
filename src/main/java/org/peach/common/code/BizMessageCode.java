@@ -13,8 +13,7 @@ import org.peach.common.mvc.result.code.MessageCode;
  */
 public final class BizMessageCode {
 
-	private BizMessageCode() {
-	}
+	private BizMessageCode() {}
 
 	// ---------- 用户域 ----------
 
@@ -136,7 +135,10 @@ public final class BizMessageCode {
 		ROLE_HARD_DELETE_FAILED(4125, "物理删除失败，请刷新后重试"),
 
 		/** 绑定的用户不存在 */
-		ROLE_BIND_USER_NOT_FOUND(4126, "绑定的用户不存在");
+		ROLE_BIND_USER_NOT_FOUND(4126, "绑定的用户不存在"),
+		
+		/** 用户没有菜单按钮权限 */
+		ROLE_NOT_AUTH(4127, "您没有权限访问系统，请联系管理员！");
 
 		private final int code;
 		private final String msg;

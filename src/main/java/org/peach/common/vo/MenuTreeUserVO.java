@@ -6,6 +6,7 @@ import java.util.List;
 import org.peach.common.utils.annotation.TreeChildren;
 import org.peach.common.utils.annotation.TreeId;
 import org.peach.common.utils.annotation.TreeParentId;
+import org.peach.common.utils.annotation.TreeSortField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -47,6 +48,10 @@ public class MenuTreeUserVO implements Serializable {
 
 	@Schema(description = "菜单图标")
 	private String icon;
+	
+	@TreeSortField
+	@Schema(description = "同级排序号，越小越靠前")
+	private Integer orderNo;
 
 	@Schema(description = "是否超级管理员")
 	private boolean admin;

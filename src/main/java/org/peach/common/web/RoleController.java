@@ -4,6 +4,7 @@ import java.util.List;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
 import org.peach.common.service.RoleService;
+import org.peach.common.vo.MenuButtonRoleVO;
 import org.peach.common.vo.MenuTreeRoleVO;
 import org.peach.common.vo.MenuTreeUserVO;
 import org.peach.common.vo.RoleUserVO;
@@ -71,12 +72,12 @@ public class RoleController extends BaseController<RoleVO, RoleService> {
 		return ApiResult.ok(service.getMenusByRoleId(roleId));
 	}
 
-	@Operation(summary = "获取角色绑定菜单数据保存数据--点击绑定菜单提交时调用")
+	@Operation(summary = "保存角色菜单按钮授权", description = "请求体为扁平 MenuButtonRoleVO 列表（仅 permission=true）；空数组清空该角色全部按钮授权")
 	@PostMapping("/menus/{roleId}")
 	public ApiResult<Void> saveRoleMenuButton(
 		@Parameter(name = "roleId", required = true, in = ParameterIn.PATH) @PathVariable Long roleId,
-		@RequestBody List<MenuTreeRoleVO> menuTreeRoleVOs) {
-		service.saveRoleMenuButton(roleId, menuTreeRoleVOs);
+		@RequestBody List<MenuButtonRoleVO> menuButtonRoleVOs) {
+		service.saveRoleMenuButton(roleId, menuButtonRoleVOs);
 		return ApiResult.ok();
 	}
 
@@ -86,10 +87,4 @@ public class RoleController extends BaseController<RoleVO, RoleService> {
 		return ApiResult.ok(service.getMenusByUserId());
 	}
 
-	@Operation(summary = "获取当前用户点击菜单对应按钮权限，返回按钮CODE")
-	@GetMapping("/user/{menuId}/buttons")
-	public ApiResult<List<String>> getButtonsByMenuId(
-		@Parameter(name = "menuId", required = true, in = ParameterIn.PATH) @PathVariable Long menuId) {
-		return ApiResult.ok(service.getButtonsByMenuId(menuId));
-	}
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.peach.common.code.BizMessageCode;
 import org.peach.common.entity.Button;
 import org.peach.common.entity.Menu;
 import org.peach.common.entity.MenuButton;
@@ -21,6 +22,7 @@ import org.peach.common.mapper.RoleButtonMapper;
 import org.peach.common.mapper.RoleMapper;
 import org.peach.common.mapper.RoleUserMapper;
 import org.peach.common.mapper.UserMapper;
+import org.peach.common.mvc.exception.BizException;
 import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.mybatis.service.BaseAbstractService;
@@ -108,15 +110,6 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 	}
 
 	@Override
-	public List<String> getButtonsByMenuId(Long menuId) {
-		// UserContext.getUserId();
-		List<MenuButton> buttonList =
-			menuButtonMapper.selectByLambda(LambdaSelect.of(MenuButton.class).eq(MenuButton::getMenuId, menuId));
-		List<String> buttonIds = buttonList.stream().map(MenuButton::getButtonCode).collect(Collectors.toList());
-		return buttonIds;
-	}
-
-	@Override
 	public List<MenuTreeUserVO> getMenusByUserId() {
 		Long userId = UserContext.getUserId();
 		String userName = UserContext.getUsername(); // 超级管理员时，查询所有有效菜单，并按序号进行排序
@@ -130,9 +123,15 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 			// 其他的按角色去查询通过UserId--》roleId--》roleIdButtons
 			List<RoleUser> roleUserList =
 				roleUserMapper.selectByLambda(LambdaSelect.of(RoleUser.class).eq(RoleUser::getUserId, userId));
+			if(CollectionUtils.isEmpty(roleUserList)) {
+				throw BizException.validWarn(BizMessageCode.Role.ROLE_NOT_AUTH);
+			}
 			List<Long> roleIds = roleUserList.stream().map(RoleUser::getRoleId).collect(Collectors.toList());
 			List<RoleButton> roleBtnList = this.roleButtonMapper
 				.selectByLambda(LambdaSelect.of(RoleButton.class).in(RoleButton::getRoleId, roleIds));
+			if(CollectionUtils.isEmpty(roleBtnList)) {
+				throw BizException.validWarn(BizMessageCode.Role.ROLE_NOT_AUTH);
+			}
 			// 获取所有角色按钮信息，查询出所有的按钮信息
 			List<Long> buttonIds = roleBtnList.stream().map(RoleButton::getButtonId).collect(Collectors.toList());
 			List<Button> buttons =
@@ -168,18 +167,19 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 	}
 
 	@Override
-	public void saveRoleMenuButton(Long roleId, List<MenuTreeRoleVO> menuTreeRoleVOs) {
-		List<MenuTreeRoleVO> tempVOs = TreeUtil.flatten(menuTreeRoleVOs, MenuTreeRoleVO.class, true);
-		List<MenuButtonRoleVO> roleButtons = new ArrayList<MenuButtonRoleVO>();
-		tempVOs.stream().forEach(e -> roleButtons.addAll(e.getButtonRoleVOs()));
-
-		List<MenuButtonRoleVO> lastRoleButtons =
-			roleButtons.stream().filter(e -> e.getPermission()).collect(Collectors.toList());
-
-		// 先删除角色下的权限
+	@Transactional
+	public void saveRoleMenuButton(Long roleId, List<MenuButtonRoleVO> menuButtonRoleVOs) {
+		// 先删后插：空列表仅删除，表示清空该角色全部菜单按钮授权
 		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getRoleId, roleId));
-		if (!CollectionUtils.isEmpty(lastRoleButtons)) {
-			this.roleButtonMapper.batchInsertBase(BeanUtil.copyList(lastRoleButtons, RoleButton.class));
+		if (CollectionUtils.isEmpty(menuButtonRoleVOs)) {
+			return;
+		}
+		List<MenuButtonRoleVO> granted = menuButtonRoleVOs.stream()
+			.filter(e -> Boolean.TRUE.equals(e.getPermission()))
+			.peek(e -> e.setRoleId(roleId))
+			.collect(Collectors.toList());
+		if (!CollectionUtils.isEmpty(granted)) {
+			this.roleButtonMapper.batchInsertBase(BeanUtil.copyList(granted, RoleButton.class));
 		}
 	}
 

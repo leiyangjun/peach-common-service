@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.peach.common.code.BizMessageCode;
 import org.peach.common.entity.ButtonApi;
 import org.peach.common.entity.Menu;
 import org.peach.common.entity.MenuButton;
@@ -12,6 +13,7 @@ import org.peach.common.mapper.ButtonApiMapper;
 import org.peach.common.mapper.MenuButtonMapper;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mapper.RoleButtonMapper;
+import org.peach.common.mvc.exception.BizException;
 import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.mybatis.model.vo.SortVO;
@@ -55,6 +57,14 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		Menu menu = BeanUtil.copy(menuInfoVO.getMenu(), Menu.class);
 		// 第一步保存菜单
 		this.mapper.saveOrUpdate(menu);
+		// 先删除原有的按钮-->删除绑定API信息，因为你无法确认用户反反复复在页面操作几次
+		this.menuButtonMapper.deleteByLambda(LambdaDelete.of(MenuButton.class).eq(MenuButton::getMenuId, menu.getId()));
+		this.buttonApiMapper.deleteByLambda(LambdaDelete.of(ButtonApi.class).eq(ButtonApi::getMenuId, menu.getId()));
+
+		// menuButtons 为 null 表示仅更新菜单主表，不触碰按钮与 API 绑定（与 POST /menu 文档约定一致）
+		if (menuInfoVO.getMenuButtons() == null) {
+			return;
+		}
 
 		List<ButtonApi> buttonApis = new ArrayList<ButtonApi>();
 		List<Long> buttonIds = new ArrayList<Long>();// 得到所有按钮ID，角色需要删除多余的按钮绑定
@@ -68,9 +78,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 			return BeanUtil.copy(e.getMenuButton(), MenuButton.class);
 		}).collect(Collectors.toList());
 		// 第三步保存按钮api信息
-		// 先删除原有的按钮-->删除绑定API信息，因为你无法确认用户反反复复在页面操作几次
-		this.menuButtonMapper.deleteByLambda(LambdaDelete.of(MenuButton.class).eq(MenuButton::getMenuId, menu.getId()));
-		this.buttonApiMapper.deleteByLambda(LambdaDelete.of(ButtonApi.class).eq(ButtonApi::getMenuId, menu.getId()));
+
 		// 还要删除角色绑定过的多余的按钮信息，比如原来绑定角色按钮A，现在按钮A没有绑定到该菜单了
 		LambdaDelete<RoleButton> lambdaDelete =
 			LambdaDelete.of(RoleButton.class).eq(RoleButton::getMenuId, menu.getId());
@@ -90,6 +98,10 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 	@Override
 	@Transactional
 	public void deleteMenuById(Long menuId) {
+		List<Menu> childMenu = this.mapper.selectByLambda(LambdaSelect.of(Menu.class).eq(Menu::getParentId, menuId));
+		if (!CollectionUtils.isEmpty(childMenu)) {
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_HAS_CHILDREN);
+		}
 		this.mapper.deleteBaseByKey(menuId, Menu.class);
 		// 同步删除该菜单关联权限 删除菜单绑定按钮--》按钮绑定API
 		this.menuButtonMapper.deleteByLambda(LambdaDelete.of(MenuButton.class).eq(MenuButton::getMenuId, menuId));
@@ -101,7 +113,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 	@Override
 	public List<MenuTreeVO> getMenuTreeAll() {
 		SortVO sortVO = new SortVO();
-		sortVO.setSortName("sortNo");
+		sortVO.setSortName("orderNo");
 		sortVO.setSortName("ASC");
 		List<Menu> menus = mapper.selectBaseAll(new Menu(), sortVO);
 		return TreeUtil.tree(BeanUtil.copyList(menus, MenuTreeVO.class), MenuTreeVO.class);

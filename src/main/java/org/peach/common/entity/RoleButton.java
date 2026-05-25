@@ -31,7 +31,7 @@ public class RoleButton implements Serializable {
 	@Schema(description = "菜单 ID（cmn_menu.id）")
 	private Long menuId;
 
-	@Schema(description = "按钮 ID（cmn_menu_button.id）")
+	@Schema(description = "按钮 ID（cmn_button.id）")
 	private Long buttonId;
 
 	@Schema(description = "是否有效：1=有效 0=无效（逻辑删除，SMALLINT）")
