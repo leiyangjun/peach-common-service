@@ -28,6 +28,9 @@ public class MenuButton implements Serializable {
 
     @Schema(description = "所属菜单 ID（cmn_menu.id）")
     private Long menuId;
+    
+    @Schema(description = "按钮 ID（cmn_button.id）")
+    private Long buttonId;
 
     @Schema(description = "按钮编码：如 SYS_USER_ADD、SYS_USER_DELETE")
     private String buttonCode;

@@ -243,9 +243,10 @@ CREATE INDEX idx_cmn_button_sort ON public.cmn_button (sort_no);
 CREATE TABLE public.cmn_menu_button (
     id                 BIGINT         NOT NULL,
     menu_id            BIGINT         NOT NULL,
+    button_id            BIGINT         NOT NULL,
     button_code        VARCHAR(64)    NOT NULL,
     button_name        VARCHAR(64)    NOT NULL,
-    order_no           INTEGER        NOT NULL DEFAULT 0,
+    order_no           INTEGER       ,
     remark             VARCHAR(500)            NULL,
     valid              SMALLINT       NOT NULL DEFAULT 1,
     creator            BIGINT                  NULL,
@@ -277,8 +278,8 @@ CREATE INDEX idx_cmn_menu_button_edit_time ON public.cmn_menu_button (edit_time 
 -- 按钮-API 绑定表：字段与 org.peach.common.mvc.api.vo.ApiMeta 对齐（另保留 api_code 作稳定绑定键）
 CREATE TABLE public.cmn_button_api (
     id                 BIGINT         NOT NULL,
+    menu_id          BIGINT         NOT NULL,
     button_id          BIGINT         NOT NULL,
-    api_code           VARCHAR(64)    NOT NULL,
     method             VARCHAR(16)    NOT NULL,
     summary            VARCHAR(256)            NULL,
     description        VARCHAR(2000)           NULL,
@@ -294,14 +295,12 @@ CREATE TABLE public.cmn_button_api (
     edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT pk_cmn_button_api PRIMARY KEY (id),
     CONSTRAINT uk_cmn_button_api_pair UNIQUE (button_id, method, url_path),
-    CONSTRAINT uk_cmn_button_api_api_code UNIQUE (button_id, api_code),
     CONSTRAINT ck_cmn_button_api_valid CHECK (valid IN (0, 1))
 );
 
 COMMENT ON TABLE public.cmn_button_api IS '按钮-API 绑定表：定义按钮可调用的后端 API 集合（字段与 ApiMeta 一致）';
 COMMENT ON COLUMN public.cmn_button_api.id IS '主键：短雪花 64 位，对应 Java long';
-COMMENT ON COLUMN public.cmn_button_api.button_id IS '按钮 ID（cmn_menu_button.id）';
-COMMENT ON COLUMN public.cmn_button_api.api_code IS 'API 编码：建议直接使用 /apis 返回的稳定编码';
+COMMENT ON COLUMN public.cmn_button_api.button_id IS '按钮 ID（cmn_button.id）';
 COMMENT ON COLUMN public.cmn_button_api.method IS 'HTTP 方法，对应 ApiMeta.method，如 GET、POST、ALL';
 COMMENT ON COLUMN public.cmn_button_api.summary IS '接口摘要，对应 ApiMeta.summary';
 COMMENT ON COLUMN public.cmn_button_api.description IS '接口详细说明，对应 ApiMeta.description';
@@ -325,6 +324,7 @@ CREATE INDEX idx_cmn_button_api_edit_time ON public.cmn_button_api (edit_time DE
 -- 角色-按钮授权表：角色权限粒度落在按钮（不直接授权 API）
 CREATE TABLE public.cmn_role_button (
     id                 BIGINT         NOT NULL,
+    menu_id            BIGINT         NOT NULL,
     role_id            BIGINT         NOT NULL,
     button_id          BIGINT         NOT NULL,
     valid              SMALLINT       NOT NULL DEFAULT 1,
@@ -340,7 +340,7 @@ CREATE TABLE public.cmn_role_button (
 COMMENT ON TABLE public.cmn_role_button IS '角色-按钮授权表：角色权限粒度到按钮';
 COMMENT ON COLUMN public.cmn_role_button.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role_button.role_id IS '角色 ID（cmn_role.id）';
-COMMENT ON COLUMN public.cmn_role_button.button_id IS '按钮 ID（cmn_menu_button.id）';
+COMMENT ON COLUMN public.cmn_role_button.button_id IS '按钮 ID（cmn_button.id）';
 COMMENT ON COLUMN public.cmn_role_button.valid IS '是否有效：1=有效 0=无效（逻辑删除，SMALLINT）';
 COMMENT ON COLUMN public.cmn_role_button.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_role_button.editor IS '修改人 ID：短雪花 64 位，对应 Java long';

@@ -19,12 +19,12 @@ public class ButtonApiVO implements Serializable {
 	@Schema(description = "主键：雪花 64 位，对应 Java long")
 	private Long id;
 
-	@Schema(description = "按钮 ID（cmn_menu_button.id）")
+	@Schema(description = "菜单 ID（cmn_menu.id）")
+    private Long menuId;
+	
+	@Schema(description = "按钮 ID（cmn_button.id）")
 	private Long buttonId;
-
-	@Schema(description = "API 编码：建议直接使用 /apis 返回的稳定编码")
-	private String apiCode;
-
+	
 	@Schema(description = "HTTP 方法，对应 ApiMeta.method")
 	private String method;
 

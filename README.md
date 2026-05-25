@@ -11,7 +11,7 @@ Peach 体系中的**基础业务服务**工程，与 `peach-gateway`、`peach-au
 ## 功能说明
 
 - 用户等 REST API（详见 `org.peach.common.web` 等包）。
-- 与网关协作：网关校验 JWT 后将身份信息以 **`peach_*` 查询参数**转发至本服务，业务代码通过 **`LoginUserUtil`**（来自 `peach-common-start`）读取。
+- 与网关协作：网关校验 JWT 后将身份信息以 **`peach_*` 查询参数**转发至本服务，业务代码通过 **`UserContext`**（来自 `peach-common-start`）读取。
 - **读写分离**：`application.yml` 内含 **`spring.datasource.rw.*`** 方案说明，由 `peach-common-start` 的 `ReadWriteDataSourceAutoConfiguration` 接管。
 
 ## 技术栈
@@ -32,7 +32,7 @@ Peach 体系中的**基础业务服务**工程，与 `peach-gateway`、`peach-au
 ## 当前范围
 
 - 提供用户等业务 API 骨架；具体功能以代码为准。
-- 访问令牌由**网关**校验；业务接口依赖网关注入的查询参数（与 **`org.peach.common.utils.LoginUserUtil`** 约定一致）。
+- 访问令牌由**网关**校验；业务接口依赖网关注入的查询参数（与 **`org.peach.common.utils.UserContext`** 约定一致）。
 
 ## 环境变量（摘要）
 

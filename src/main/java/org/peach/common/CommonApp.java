@@ -26,11 +26,6 @@ public class CommonApp {
 //				"postgres",
 //				"postgres",
 //				"org.postgresql.Driver",
-//				"cmn_user",
-//				"cmn_role",
-//				"cmn_menu",
-//				"cmn_menu_button",
-//				"cmn_button_api",
-//				"cmn_role_button");
+//				"cmn_button");
 	}
 }

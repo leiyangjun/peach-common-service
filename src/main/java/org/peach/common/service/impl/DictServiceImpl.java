@@ -37,9 +37,9 @@ public class DictServiceImpl extends BaseAbstractService<DictMapper, Dict, DictV
 			throw BizException.validWarn(BizMessageCode.Dict.DICT_NOT_FOUND);
 		}
 		if (dict.getStatus().shortValue() == 1) {
-			this.mapper.logicDeleteByKey(dict, Dict.class);
+			this.mapper.logicDeleteByKey(id, Dict.class);
 		} else {
-			this.mapper.logicRecoveryByKey(dict, Dict.class);
+			this.mapper.logicRecoveryByKey(id, Dict.class);
 		}
 	}
 

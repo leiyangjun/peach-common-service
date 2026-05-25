@@ -89,7 +89,7 @@ public class DictController {
 	}
 
 	@Operation(summary = "根据字典类型获取有效字典数据--供前端使用选项数据匹配label类似")
-	@GetMapping("/{dictType}")
+	@GetMapping("/valid/{dictType}")
 	public ApiResult<List<DictVO>> getByDictType(
 		@Parameter(name = "dictType", required = true, in = ParameterIn.PATH) @PathVariable String dictType) {
 		return ApiResult.ok(service.getByDictType(dictType));

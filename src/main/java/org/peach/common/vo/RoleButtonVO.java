@@ -1,12 +1,13 @@
 package org.peach.common.vo;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-/** 依据 {@link org.peach.common.entity.RoleButton} 生成的对外 VO，不同步时手工改。
+/**
+ * 依据 {@link org.peach.common.entity.RoleButton} 生成的对外 VO，不同步时手工改。
  *
  * @author leiyangjun
  */
@@ -21,6 +22,9 @@ public class RoleButtonVO implements Serializable {
 
 	@Schema(description = "角色 ID（cmn_role.id）")
 	private Long roleId;
+
+	@Schema(description = "菜单 ID（cmn_menu.id）")
+	private Long menuId;
 
 	@Schema(description = "按钮 ID（cmn_menu_button.id）")
 	private Long buttonId;

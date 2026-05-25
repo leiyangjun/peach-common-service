@@ -2,6 +2,8 @@ package org.peach.common.service;
 
 import java.util.List;
 import org.peach.common.mybatis.service.BaseInterfaceService;
+import org.peach.common.vo.ButtonVO;
+import org.peach.common.vo.MenuVO;
 import org.peach.common.vo.RoleUserVO;
 import org.peach.common.vo.RoleVO;
 import org.peach.common.vo.UserVO;
@@ -31,4 +33,9 @@ public interface RoleService extends BaseInterfaceService<RoleVO> {
 	 * @author leiyangjun
 	 */
 	void bindUser(Long roleId, List<RoleUserVO> users);
+	
+	
+	List<MenuVO> getMenusByUserId();
+	
+	List<String> getButtonsByMenuId(Long menuId);
 }

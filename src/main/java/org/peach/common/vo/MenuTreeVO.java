@@ -3,20 +3,25 @@ package org.peach.common.vo;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+import org.peach.common.utils.annotation.TreeId;
+import org.peach.common.utils.annotation.TreeParentId;
 import org.peach.common.utils.annotation.TreeSortField;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 /** 依据 {@link org.peach.common.entity.Menu} 生成的对外 VO，不同步时手工改。 */
 @Data
-public class MenuVO implements Serializable {
+public class MenuTreeVO implements Serializable {
 
 	@Serial
 	private static final long serialVersionUID = 1L;
 
+	@TreeId
 	@Schema(description = "主键：雪花 64 位，对应 Java long")
 	private Long id;
 
+	@TreeParentId
 	@Schema(description = "父菜单 ID：根节点可为 0 或 NULL")
 	private Long parentId;
 
@@ -59,5 +64,9 @@ public class MenuVO implements Serializable {
 
 	@Schema(description = "最后更新时间")
 	private Date editTime;
+
+	/** 菜单树子节点；列表/详情无树语义时可不传或为 null */
+	@Schema(description = "子菜单列表（仅树接口填充）")
+	private List<MenuTreeVO> children;
 
 }

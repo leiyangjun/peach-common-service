@@ -4,6 +4,7 @@ import java.util.List;
 import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
 import org.peach.common.service.RoleService;
+import org.peach.common.vo.MenuVO;
 import org.peach.common.vo.RoleUserVO;
 import org.peach.common.vo.RoleVO;
 import org.peach.common.vo.UserVO;
@@ -59,5 +60,18 @@ public class RoleController extends BaseController<RoleVO, RoleService> {
 		@Valid @RequestBody List<RoleUserVO> users) {
 		service.bindUser(roleId, users);
 		return ApiResult.ok();
+	}
+
+	@Operation(summary = "获取当前用户的菜单树（所具备权限的菜单树）--管理员权限群组获取所有有效菜单")
+	@GetMapping("/user/menus")
+	public ApiResult<List<MenuVO>> getMenusByUserId() {
+		return ApiResult.ok(service.getMenusByUserId());
+	}
+
+	@Operation(summary = "获取当前用户点击菜单对应按钮权限，返回按钮CODE")
+	@GetMapping("/user/{menuId}/buttons")
+	public ApiResult<List<String>> getButtonsByMenuId(
+		@Parameter(name = "menuId", required = true, in = ParameterIn.PATH) @PathVariable Long menuId) {
+		return ApiResult.ok(service.getButtonsByMenuId(menuId));
 	}
 }
