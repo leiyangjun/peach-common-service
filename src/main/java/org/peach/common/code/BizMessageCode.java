@@ -88,7 +88,28 @@ public final class BizMessageCode {
 		MENU_HAS_CHILDREN(4116, "请先删除或移走子菜单后再物理删除"),
 
 		/** 删除失败 */
-		MENU_DELETE_FAILED(4117, "删除失败");
+		MENU_DELETE_FAILED(4117, "删除失败"),
+
+		/** 运维接口不支持的菜单类型 */
+		MENU_OPS_NOT_CATALOG(4118, "运维仅支持目录或菜单类型"),
+
+		/** 查询按钮字典缺失 */
+		MENU_BTN_QUERY_NOT_FOUND(4119, "系统未配置查询按钮 BTN_QUERY"),
+
+		/** 存在子节点时不允许改为菜单类型 */
+		MENU_OPS_CATALOG_HAS_CHILDREN(4120, "存在子菜单时不能改为菜单类型"),
+
+		/** 菜单类型须挂在目录下 */
+		MENU_OPS_MENU_PARENT_MUST_CATALOG(4121, "菜单类型必须选择目录作为上级"),
+
+		/** 运维新建仅允许目录 */
+		MENU_OPS_CREATE_ONLY_CATALOG(4122, "运维新建仅支持目录类型"),
+
+		/** 运维删除仅允许目录 */
+		MENU_OPS_DELETE_NOT_CATALOG(4123, "仅目录可删除，菜单不可删除"),
+		
+		/** 菜单只能移动到目录下不能挂到菜单下 */
+		MENU_CATALOG_TYPE(4123, "菜单只能移动到目录下不能挂到菜单下");
 
 		private final int code;
 		private final String msg;

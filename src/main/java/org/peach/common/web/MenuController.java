@@ -6,11 +6,15 @@ import org.peach.common.mvc.result.ApiResult;
 import org.peach.common.mvc.web.BaseController;
 import org.peach.common.service.MenuService;
 import org.peach.common.vo.MenuInfoVO;
+import org.peach.common.vo.MenuOpsPatchVO;
 import org.peach.common.vo.MenuTreeVO;
+import org.peach.common.vo.MenuVO;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -48,6 +52,17 @@ public class MenuController {
 		return ApiResult.ok();
 	}
 
+	@Operation(summary = "调整菜单父级菜单--用于菜单管理", description = "拖拽调整菜单父级菜单")
+	@PutMapping("/{menuId}/{parentId}")
+	public ApiResult<List<MenuTreeVO>> editParentId(
+		@Parameter(name = "menuId", description = "菜单的主键ID", required = true,
+			in = ParameterIn.PATH) @PathVariable("menuId") Long menuId,
+		@Parameter(name = "parentId", description = "父级菜单ID，一级为 0", required = true,
+			in = ParameterIn.PATH) @PathVariable("parentId") Long parentId) {
+		service.editParentId(menuId, parentId);
+		return ApiResult.ok(service.getMenuTreeAll());
+	}
+
 	@Operation(summary = "菜单树（全部）--用于菜单管理", description = "组装为树；菜单管理后台使用")
 	@GetMapping("/tree/all")
 	public ApiResult<List<MenuTreeVO>> getMenuTreeAll() {
@@ -66,6 +81,36 @@ public class MenuController {
 	public ApiResult<Void> delete(@Parameter(name = "menuId", description = "菜单的主键ID", required = true,
 		in = ParameterIn.PATH) @PathVariable("menuId") Long id) {
 		service.deleteMenuById(id);
+		return ApiResult.ok();
+	}
+
+	@Operation(summary = "运维菜单详情", description = "CATALOG/MENU；不含按钮/API 绑定区")
+	@GetMapping("/ops/{menuId}")
+	public ApiResult<MenuVO> getMenuOps(@Parameter(name = "menuId", description = "菜单主键", required = true,
+		in = ParameterIn.PATH) @PathVariable("menuId") Long menuId) {
+		return ApiResult.ok(service.getMenuOpsDetail(menuId));
+	}
+
+	@Operation(summary = "新建运维目录", description = "仅 CATALOG；服务端生成 menuCode/routePath；自动绑定 BTN_QUERY")
+	@PostMapping("/ops")
+	public ApiResult<Void> createMenuOps(@Valid @RequestBody MenuVO menuVO) {
+		service.createMenuOpsCatalog(menuVO);
+		return ApiResult.ok();
+	}
+
+	@Operation(summary = "物理删除运维目录", description = "仅 CATALOG、无子节点；MENU 不可删")
+	@DeleteMapping("/ops/{menuId}")
+	public ApiResult<Void> deleteMenuOps(@Parameter(name = "menuId", description = "目录主键", required = true,
+		in = ParameterIn.PATH) @PathVariable("menuId") Long menuId) {
+		service.deleteMenuOpsById(menuId);
+		return ApiResult.ok();
+	}
+
+	@Operation(summary = "更新运维菜单", description = "可改名称/排序/上级/图标/显示/备注；类型不可改；不删除已有 menu_button")
+	@PatchMapping("/ops/{menuId}")
+	public ApiResult<Void> patchMenuOps(@Parameter(name = "menuId", description = "目录主键", required = true,
+		in = ParameterIn.PATH) @PathVariable("menuId") Long menuId, @Valid @RequestBody MenuOpsPatchVO patchVO) {
+		service.patchMenuOps(menuId, patchVO);
 		return ApiResult.ok();
 	}
 }

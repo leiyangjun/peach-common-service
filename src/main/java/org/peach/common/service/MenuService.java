@@ -3,6 +3,8 @@ package org.peach.common.service;
 import java.util.List;
 import org.peach.common.mybatis.service.BaseInterfaceService;
 import org.peach.common.vo.MenuInfoVO;
+import org.peach.common.vo.MenuOpsDetailVO;
+import org.peach.common.vo.MenuOpsPatchVO;
 import org.peach.common.vo.MenuTreeVO;
 import org.peach.common.vo.MenuVO;
 
@@ -20,6 +22,17 @@ public interface MenuService extends BaseInterfaceService<MenuVO> {
 	 * @throws
 	 */
 	void saveOrUpdate(MenuInfoVO menuInfoVO);
+	
+	/**
+	 * 
+	 * @Title: editParentId   
+	 * @Description: 调整父级菜单ID   
+	 * @param: @param menuId
+	 * @param: @param parentId      
+	 * @return: void      
+	 * @throws
+	 */
+	void editParentId(Long menuId,Long parentId);
 
 	MenuInfoVO getMenuInfoById(Long menuId);
 
@@ -42,4 +55,20 @@ public interface MenuService extends BaseInterfaceService<MenuVO> {
 	 * @throws
 	 */
 	void deleteMenuById(Long menuId);
+
+	/** 运维菜单详情（CATALOG / MENU） */
+	MenuVO getMenuOpsDetail(Long menuId);
+
+	/** 新建运维菜单（默认 CATALOG；CATALOG 自动插入 BTN_QUERY） */
+	void createMenuOpsCatalog(MenuVO menuVO);
+
+	/** 局部更新运维菜单（不可改 menuType；不删 menu_button） */
+	void patchMenuOps(Long menuId, MenuOpsPatchVO patchVO);
+
+	/**
+	 * 物理删除运维目录：仅 CATALOG、无子节点；菜单类型不可删。
+	 *
+	 * @param menuId 目录主键
+	 */
+	void deleteMenuOpsById(Long menuId);
 }

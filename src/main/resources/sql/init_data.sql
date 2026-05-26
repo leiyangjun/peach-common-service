@@ -32,6 +32,8 @@ INSERT INTO public.cmn_menu (id, parent_id, menu_code, menu_name, menu_type, rou
 
 (300000000009, 300000000004, 'SYS_MENU_MGMT', '菜单管理', 'MENU', '/system/menu', NULL, 'Menu', 14, 1),
 
+(300000000016, 300000000004, 'SYS_MENU_OPS', '运维菜单管理', 'MENU', '/system/menu-ops', NULL, 'Tools', 16, 1),
+
 (300000000010, 300000000003, 'OPS_DEMO_LINKS', '演示与外链', 'CATALOG', '/ops/demo', NULL, 'Link', 20, 1),
 
 (300000000011, 300000000010, 'DEMO_SWAGGER', '演示Swagger', 'MENU', 'frame://http://127.0.0.1:8090/swagger-ui.html', NULL, 'Document', 41, 1),
@@ -168,7 +170,13 @@ INSERT INTO public.cmn_menu_button (id, menu_id, button_id, button_code, button_
 
 (400000000034, 300000000009, 700000000004, 'BTN_DELETE', '删除', 310, 1),
 
-(400000000035, 300000000009, 700000000005, 'BTN_CANCEL', '取消', 480, 1)
+(400000000035, 300000000009, 700000000005, 'BTN_CANCEL', '取消', 480, 1),
+
+(400000000036, 300000000016, 700000000001, 'BTN_QUERY', '查询', 10, 1),
+
+(400000000037, 300000000016, 700000000002, 'BTN_ADD', '新增', 110, 1),
+
+(400000000038, 300000000016, 700000000003, 'BTN_EDIT', '编辑', 210, 1)
 
 ON CONFLICT (id) DO UPDATE SET
 

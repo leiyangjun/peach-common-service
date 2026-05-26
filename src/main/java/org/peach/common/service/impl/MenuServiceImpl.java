@@ -4,18 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.peach.common.code.BizMessageCode;
+import org.peach.common.entity.Button;
 import org.peach.common.entity.ButtonApi;
 import org.peach.common.entity.Menu;
 import org.peach.common.entity.MenuButton;
 import org.peach.common.entity.RoleButton;
 import org.peach.common.mapper.ButtonApiMapper;
+import org.peach.common.mapper.ButtonMapper;
 import org.peach.common.mapper.MenuButtonMapper;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mapper.RoleButtonMapper;
 import org.peach.common.mvc.exception.BizException;
 import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
+import org.peach.common.mybatis.lambda.LambdaUpdate;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.MenuService;
@@ -25,6 +29,7 @@ import org.peach.common.vo.ButtonApiVO;
 import org.peach.common.vo.MenuButtonInfoVO;
 import org.peach.common.vo.MenuButtonVO;
 import org.peach.common.vo.MenuInfoVO;
+import org.peach.common.vo.MenuOpsPatchVO;
 import org.peach.common.vo.MenuTreeVO;
 import org.peach.common.vo.MenuVO;
 import org.springframework.stereotype.Service;
@@ -37,18 +42,25 @@ import org.springframework.util.CollectionUtils;
 @Service
 public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuVO> implements MenuService {
 
+	private static final String MENU_TYPE_CATALOG = "CATALOG";
+
+	private static final String BTN_QUERY_CODE = "BTN_QUERY";
+
 	private final MenuButtonMapper menuButtonMapper;
 
 	private final ButtonApiMapper buttonApiMapper;
 
 	private final RoleButtonMapper roleButtonMapper;
 
+	private final ButtonMapper buttonMapper;
+
 	protected MenuServiceImpl(MenuMapper mapper, MenuButtonMapper menuButtonMapper, ButtonApiMapper buttonApiMapper,
-		RoleButtonMapper roleButtonMapper) {
+		RoleButtonMapper roleButtonMapper, ButtonMapper buttonMapper) {
 		super(mapper, Menu.class, MenuVO.class);
 		this.menuButtonMapper = menuButtonMapper;
 		this.buttonApiMapper = buttonApiMapper;
 		this.roleButtonMapper = roleButtonMapper;
+		this.buttonMapper = buttonMapper;
 	}
 
 	@Override
@@ -93,6 +105,17 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		if (!CollectionUtils.isEmpty(buttonApis)) {
 			this.buttonApiMapper.batchInsertBase(buttonApis);
 		}
+	}
+
+	@Override
+	@Transactional
+	public void editParentId(Long menuId, Long parentId) {
+		var menu = this.mapper.selectBaseByKey(parentId, Menu.class);
+		if (menu == null || !MENU_TYPE_CATALOG.equals(menu.getMenuType())) {
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_CATALOG_TYPE);
+		}
+		this.mapper
+			.updateByLambdaQuery(LambdaUpdate.of(Menu.class).set(Menu::getParentId, parentId).eq(Menu::getId, menuId));
 	}
 
 	@Override
@@ -142,4 +165,69 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		infoVO.setMenuButtons(menuButtonInfoVOs);
 		return infoVO;
 	}
+
+	@Override
+	public MenuVO getMenuOpsDetail(Long menuId) {
+		Menu menu = this.mapper.selectBaseByKey(menuId, Menu.class);
+		return BeanUtil.copy(menu, MenuVO.class);
+	}
+
+	@Override
+	@Transactional
+	public void createMenuOpsCatalog(MenuVO menuVO) {
+		if (!MENU_TYPE_CATALOG.equals(menuVO.getMenuType())) {
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_OPS_CREATE_ONLY_CATALOG);
+		}
+		Menu menu = BeanUtil.copy(menuVO, Menu.class);
+		this.mapper.saveOrUpdate(menu);
+
+		// 先删除原有的按钮-->删除绑定API信息，因为你无法确认用户反反复复在页面操作几次
+		this.menuButtonMapper.deleteByLambda(LambdaDelete.of(MenuButton.class).eq(MenuButton::getMenuId, menu.getId()));
+		this.buttonApiMapper.deleteByLambda(LambdaDelete.of(ButtonApi.class).eq(ButtonApi::getMenuId, menu.getId()));
+
+		Button button = this.buttonMapper
+			.selectOneByLambda((LambdaSelect.of(Button.class).eq(Button::getButtonCode, BTN_QUERY_CODE)));
+		MenuButton menuButton = new MenuButton();
+		BeanUtil.copyProperties(button, menuButton);
+		menuButton.setMenuId(menuVO.getId());
+		this.menuButtonMapper.insertBase(menuButton);
+
+	}
+
+	@Override
+	@Transactional
+	public void deleteMenuOpsById(Long menuId) {
+		List<Menu> childMenu = this.mapper.selectByLambda(LambdaSelect.of(Menu.class).eq(Menu::getParentId, menuId));
+		if (!CollectionUtils.isEmpty(childMenu)) {
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_HAS_CHILDREN);
+		}
+		Menu menu = this.mapper.selectBaseByKey(menuId, Menu.class);
+		if (!MENU_TYPE_CATALOG.equals(menu.getMenuType())) {
+			throw BizException.validWarn(BizMessageCode.Menu.MENU_OPS_DELETE_NOT_CATALOG);
+		}
+		this.mapper.deleteBaseByKey(menuId, Menu.class);
+		// 同步删除该菜单关联权限 删除菜单绑定按钮--》按钮绑定API
+		this.menuButtonMapper.deleteByLambda(LambdaDelete.of(MenuButton.class).eq(MenuButton::getMenuId, menuId));
+		this.buttonApiMapper.deleteByLambda(LambdaDelete.of(ButtonApi.class).eq(ButtonApi::getMenuId, menuId));
+		// 删除该菜单角色绑定
+		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getMenuId, menuId));
+	}
+
+	@Override
+	@Transactional
+	public void patchMenuOps(Long menuId, MenuOpsPatchVO patchVO) {
+		LambdaUpdate<Menu> lambdaUpdate = LambdaUpdate.of(Menu.class);
+		lambdaUpdate.eq(Menu::getId, menuId);
+		lambdaUpdate.set(Menu::getMenuName, patchVO.getMenuName());
+		lambdaUpdate.set(Menu::getIcon, patchVO.getIcon());
+		lambdaUpdate.set(Menu::getOrderNo, patchVO.getOrderNo());
+		if (StringUtils.isBlank(patchVO.getRemark())) {
+			lambdaUpdate.isNull(Menu::getRemark);
+		} else {
+			lambdaUpdate.set(Menu::getRemark, patchVO.getRemark());
+		}
+		lambdaUpdate.set(Menu::getValid, patchVO.getValid());
+		this.mapper.updateByLambdaQuery(lambdaUpdate);
+	}
+
 }

@@ -7,6 +7,7 @@ SET client_encoding = 'UTF8';
 SET search_path = public;
 
 -- ========== 删表（依赖多的先删；各表均 CASCADE，避免残留外键）==========
+DROP TABLE IF EXISTS public.cmn_application CASCADE;
 DROP TABLE IF EXISTS public.cmn_button CASCADE;
 DROP TABLE IF EXISTS public.cmn_button_api CASCADE;
 DROP TABLE IF EXISTS public.cmn_role_button CASCADE;
@@ -109,6 +110,40 @@ COMMENT ON COLUMN public.cmn_role.edit_time IS '最后更新时间';
 
 CREATE INDEX idx_cmn_role_valid ON public.cmn_role (valid);
 CREATE INDEX idx_cmn_role_edit_time ON public.cmn_role (edit_time DESC);
+
+-- 应用表：逻辑客户端/产品线主数据（管理端 WEB、移动端、开放 API 等）；与菜单/API 权限按应用隔离的演进基础
+CREATE TABLE public.cmn_application (
+    id                 BIGINT         NOT NULL,
+    app_type           VARCHAR(10)    NOT NULL,
+    app_name           VARCHAR(30) NOT NULL,
+    app_code           VARCHAR(20)    NOT NULL,
+    app_desc           VARCHAR(100)            NULL,
+    creator            BIGINT                  NULL,
+    editor             BIGINT                  NULL,
+    create_time        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_cmn_application PRIMARY KEY (id),
+    CONSTRAINT uk_cmn_application_code UNIQUE (app_code),
+    CONSTRAINT ck_cmn_application_valid CHECK (valid IN (0, 1)),
+    CONSTRAINT ck_cmn_application_type CHECK (app_type IN ('ADMIN', 'APP', 'OPENAPI'))
+);
+
+COMMENT ON TABLE public.cmn_application IS '应用主数据：按 app_type 区分客户端形态；app_code 为稳定业务编码；service_name 可选对齐 Nacos/网关 serviceId';
+COMMENT ON COLUMN public.cmn_application.id IS '主键：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_application.app_type IS '应用类型：WEB=Web 管理端，MOBILE=移动端，OPENAPI=开放 API 客户端，OTHER=其他';
+COMMENT ON COLUMN public.cmn_application.app_name IS '应用名称：管理端展示';
+COMMENT ON COLUMN public.cmn_application.app_code IS '应用编码：全局唯一，如 ADMIN_WEB、PARTNER_OPENAPI';
+COMMENT ON COLUMN public.cmn_application.app_desc IS '应用描述';
+COMMENT ON COLUMN public.cmn_application.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_application.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_application.create_time IS '创建时间';
+COMMENT ON COLUMN public.cmn_application.edit_time IS '最后更新时间';
+
+CREATE INDEX idx_cmn_application_type ON public.cmn_application (app_type);
+CREATE INDEX idx_cmn_application_service_name ON public.cmn_application (service_name) WHERE service_name IS NOT NULL;
+CREATE INDEX idx_cmn_application_valid ON public.cmn_application (valid);
+CREATE INDEX idx_cmn_application_sort ON public.cmn_application (sort_no);
+CREATE INDEX idx_cmn_application_edit_time ON public.cmn_application (edit_time DESC);
 
 -- 码表（字典项）：同一 dict_type 下 dict_value 全局唯一；status=1 启用、0=停用
 CREATE TABLE public.cmn_dict (
