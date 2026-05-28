@@ -222,7 +222,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		lambdaUpdate.set(Menu::getIcon, patchVO.getIcon());
 		lambdaUpdate.set(Menu::getOrderNo, patchVO.getOrderNo());
 		if (StringUtils.isBlank(patchVO.getRemark())) {
-			lambdaUpdate.isNull(Menu::getRemark);
+			lambdaUpdate.set(Menu::getRemark, patchVO.getRemark());
 		} else {
 			lambdaUpdate.set(Menu::getRemark, patchVO.getRemark());
 		}

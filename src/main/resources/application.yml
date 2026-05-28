@@ -7,8 +7,16 @@ spring:
     module-code: COMM
   profiles:
     active: dev
+  data:
+    redis:
+      host: ${REDIS_HOST:192.168.99.100}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:redis}
+      database: ${REDIS_DATABASE:0}
+      timeout: 3s
   cloud:
     nacos:
       server-addr: ${NACOS_SERVER_ADDR:192.168.99.100:8848}
       username: ${NACOS_USERNAME:nacos}
       password: ${NACOS_PASSWORD:nacos}
+

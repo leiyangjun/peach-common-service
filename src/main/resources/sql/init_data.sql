@@ -34,6 +34,8 @@ INSERT INTO public.cmn_menu (id, parent_id, menu_code, menu_name, menu_type, rou
 
 (300000000016, 300000000004, 'SYS_MENU_OPS', '运维菜单管理', 'MENU', '/system/menu-ops', NULL, 'Tools', 16, 1),
 
+(300000000017, 300000000004, 'SYS_UNAUTH_API', '免鉴权 API', 'MENU', '/system/unauth-api', NULL, 'Unlock', 17, 1),
+
 (300000000010, 300000000003, 'OPS_DEMO_LINKS', '演示与外链', 'CATALOG', '/ops/demo', NULL, 'Link', 20, 1),
 
 (300000000011, 300000000010, 'DEMO_SWAGGER', '演示Swagger', 'MENU', 'frame://http://127.0.0.1:8090/swagger-ui.html', NULL, 'Document', 41, 1),
@@ -194,4 +196,40 @@ ON CONFLICT (id) DO UPDATE SET
 
 
 INSERT INTO public.cmn_role_user (id, role_id, user_id) VALUES (600000000001, 200000000001, 100000000001) ON CONFLICT (id) DO NOTHING;
+
+-- 网关 JWT 内置免鉴权：门户 /peach-doc-portal/**；其余经 /peach-gateway/**（method 禁止 ALL）
+DELETE FROM public.cmn_unauth_api WHERE id BETWEEN 610000000001 AND 610000000099;
+
+INSERT INTO public.cmn_unauth_api (id, method, summary, url_path, service_name, is_external, final_path, deletable, valid) VALUES
+-- 文档门户（不经 /peach-gateway 前缀）
+(610000000004, 'GET', 'API 文档门户', NULL, NULL, 1, '/peach-doc-portal/**', 0, 1),
+(610000000002, 'GET', '文档门户入口页', NULL, NULL, 1, '/index.html', 0, 1),
+-- 网关本机能力（统一前缀 /peach-gateway）
+(610000000001, 'GET', '网关统一入口', NULL, NULL, 1, '/peach-gateway', 0, 1),
+(610000000003, 'GET', '网关路由诊断', NULL, NULL, 1, '/peach-gateway/routes', 0, 1),
+(610000000005, 'GET', '网关 OpenAPI', NULL, NULL, 1, '/peach-gateway/v3/api-docs', 0, 1),
+(610000000006, 'GET', '网关 OpenAPI 子路径', NULL, NULL, 1, '/peach-gateway/v3/api-docs/**', 0, 1),
+(610000000007, 'GET', '网关 Swagger UI', NULL, NULL, 1, '/peach-gateway/swagger-ui.html', 0, 1),
+(610000000008, 'GET', '网关 Swagger 静态资源', NULL, NULL, 1, '/peach-gateway/swagger-ui/**', 0, 1),
+(610000000009, 'GET', '网关 Webjars', NULL, NULL, 1, '/peach-gateway/webjars/**', 0, 1),
+-- peach-auth-service 登录鉴权（经 /peach-gateway/{serviceId}）
+(610000000010, 'POST', '登录鉴权-滑块挑战', '/admin/auth/login/slider/challenge', 'peach-auth-service', 0, '/peach-gateway/peach-auth-service/admin/auth/login/slider/challenge', 0, 1),
+(610000000011, 'GET', '登录鉴权-RSA 公钥', '/admin/auth/login/password/public-key', 'peach-auth-service', 0, '/peach-gateway/peach-auth-service/admin/auth/login/password/public-key', 0, 1),
+(610000000012, 'POST', '登录鉴权-密码登录', '/admin/auth/login/password', 'peach-auth-service', 0, '/peach-gateway/peach-auth-service/admin/auth/login/password', 0, 1),
+(610000000013, 'POST', '刷新 Token', '/admin/auth/refresh', 'peach-auth-service', 0, '/peach-gateway/peach-auth-service/admin/auth/refresh', 0, 1),
+-- 各微服务 Swagger（/peach-gateway/{serviceId}/... 通配，不含具体服务名）
+(610000000020, 'GET', '微服务 Swagger-OpenAPI(admin)', NULL, NULL, 1, '/peach-gateway/*/admin/v3/api-docs/**', 0, 1),
+(610000000021, 'GET', '微服务 Swagger-UI(admin)', NULL, NULL, 1, '/peach-gateway/*/admin/swagger-ui/**', 0, 1),
+(610000000022, 'GET', '微服务 Swagger 入口(admin)', NULL, NULL, 1, '/peach-gateway/*/admin/swagger-ui.html', 0, 1),
+(610000000023, 'GET', '微服务 Swagger-OpenAPI', NULL, NULL, 1, '/peach-gateway/*/v3/api-docs/**', 0, 1),
+(610000000024, 'GET', '微服务 Swagger-UI', NULL, NULL, 1, '/peach-gateway/*/swagger-ui/**', 0, 1),
+(610000000025, 'GET', '微服务 Swagger 入口', NULL, NULL, 1, '/peach-gateway/*/swagger-ui.html', 0, 1)
+ON CONFLICT (final_path) DO UPDATE SET
+    method = EXCLUDED.method,
+    summary = EXCLUDED.summary,
+    url_path = EXCLUDED.url_path,
+    service_name = EXCLUDED.service_name,
+    is_external = EXCLUDED.is_external,
+    deletable = EXCLUDED.deletable,
+    valid = EXCLUDED.valid;
 

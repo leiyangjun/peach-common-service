@@ -180,6 +180,38 @@ public final class BizMessageCode {
 		}
 	}
 
+	// ---------- 免鉴权 API（网关白名单）----------
+
+	/**
+	 * 网关免鉴权 API（号段 4140–4149）。
+	 */
+	public enum Unauth implements MessageCode {
+
+		/** 记录不存在 */
+		NOT_FOUND(4140, "免鉴权 API 不存在"),
+
+		/** 内置项不可删除 */
+		NOT_DELETABLE(4141, "该免鉴权 API 不允许删除");
+
+		private final int code;
+		private final String msg;
+
+		Unauth(int code, String msg) {
+			this.code = code;
+			this.msg = msg;
+		}
+
+		@Override
+		public int code() {
+			return code;
+		}
+
+		@Override
+		public String msg() {
+			return msg;
+		}
+	}
+
 	// ---------- 码表域 ----------
 
 	/**

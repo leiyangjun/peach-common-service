@@ -3,7 +3,6 @@ package org.peach.common.service;
 import java.util.List;
 import org.peach.common.mybatis.service.BaseInterfaceService;
 import org.peach.common.vo.MenuInfoVO;
-import org.peach.common.vo.MenuOpsDetailVO;
 import org.peach.common.vo.MenuOpsPatchVO;
 import org.peach.common.vo.MenuTreeVO;
 import org.peach.common.vo.MenuVO;

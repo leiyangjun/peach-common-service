@@ -7,6 +7,9 @@ SET client_encoding = 'UTF8';
 SET search_path = public;
 
 -- ========== 删表（依赖多的先删；各表均 CASCADE，避免残留外键）==========
+DROP TABLE IF EXISTS public.cmn_unauth_api CASCADE;
+DROP TABLE IF EXISTS public.cmn_gateway_anonymous_revision CASCADE;
+DROP TABLE IF EXISTS public.cmn_gateway_anonymous_api CASCADE;
 DROP TABLE IF EXISTS public.cmn_application CASCADE;
 DROP TABLE IF EXISTS public.cmn_button CASCADE;
 DROP TABLE IF EXISTS public.cmn_button_api CASCADE;
@@ -355,6 +358,56 @@ CREATE INDEX idx_cmn_button_api_method_path ON public.cmn_button_api (method, ur
 CREATE INDEX idx_cmn_button_api_service_name ON public.cmn_button_api (service_name);
 CREATE INDEX idx_cmn_button_api_valid ON public.cmn_button_api (valid);
 CREATE INDEX idx_cmn_button_api_edit_time ON public.cmn_button_api (edit_time DESC);
+
+-- 网关 JWT 免鉴权 API：final_path 为经网关的最终 Ant 路径（入库前拼好，网关不再拼接）
+CREATE TABLE public.cmn_unauth_api (
+    id                 BIGINT         NOT NULL,
+    method             VARCHAR(8)     NOT NULL,
+    summary            VARCHAR(100)            NULL,
+    url_path           VARCHAR(200)            NULL,
+    service_name       VARCHAR(20)             NULL,
+    is_external        SMALLINT       NOT NULL DEFAULT 0,
+    final_path         VARCHAR(256)   NOT NULL,
+    deletable          SMALLINT       NOT NULL DEFAULT 1,
+    valid              SMALLINT       NOT NULL DEFAULT 1,
+    creator            BIGINT                  NULL,
+    editor             BIGINT                  NULL,
+    create_time        TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    edit_time          TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT pk_cmn_unauth_api PRIMARY KEY (id),
+    CONSTRAINT uk_cmn_unauth_api_final_path UNIQUE (final_path),
+    CONSTRAINT ck_cmn_unauth_api_external CHECK (is_external IN (0, 1)),
+    CONSTRAINT ck_cmn_unauth_api_deletable CHECK (deletable IN (0, 1)),
+    CONSTRAINT ck_cmn_unauth_api_valid CHECK (valid IN (0, 1)),
+    CONSTRAINT ck_cmn_unauth_api_external_shape CHECK (
+        is_external = 0
+        OR (service_name IS NULL AND url_path IS NULL)
+    )
+);
+
+COMMENT ON TABLE public.cmn_unauth_api IS
+    '网关 JWT 免鉴权 API；final_path 供 TokenGlobalFilter 直接 Ant 匹配；与代码内置名单合并';
+COMMENT ON COLUMN public.cmn_unauth_api.id IS '主键：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_unauth_api.method IS 'HTTP 方法（GET/POST 等），与下游接口一致；禁止 ALL';
+COMMENT ON COLUMN public.cmn_unauth_api.summary IS '接口摘要，对应 ApiMeta.summary';
+COMMENT ON COLUMN public.cmn_unauth_api.url_path IS
+    '内部 API 下游路径片段（对应 ApiMeta.urlPath），如 /admin/auth/login/**；外部 API 须为空';
+COMMENT ON COLUMN public.cmn_unauth_api.service_name IS
+    '内部 API 的 Nacos serviceId（对应 ApiMeta.serviceName），如 peach-auth-service；外部 API 须为空';
+COMMENT ON COLUMN public.cmn_unauth_api.is_external IS
+    '是否外部 API：0=本体系微服务（保存时由 service_name+url_path 拼入 final_path）；1=体系外（final_path 为外部完整 path，service_name/url_path 为空）';
+COMMENT ON COLUMN public.cmn_unauth_api.final_path IS
+    '最终 API 路径（Ant）：外部 API 填经网关的完整 path；内部 API 填 /{service_name}{url_path} 预拼接结果，网关不再拼接';
+COMMENT ON COLUMN public.cmn_unauth_api.deletable IS
+    '是否允许删除：0=禁止删除（登录、短信验证码等内置项）；1=允许删除';
+COMMENT ON COLUMN public.cmn_unauth_api.valid IS '是否启用免鉴权：1=参与 JWT 白名单 0=停用（非逻辑删除）';
+COMMENT ON COLUMN public.cmn_unauth_api.creator IS '创建人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_unauth_api.editor IS '修改人 ID：短雪花 64 位，对应 Java long';
+COMMENT ON COLUMN public.cmn_unauth_api.create_time IS '创建时间';
+COMMENT ON COLUMN public.cmn_unauth_api.edit_time IS '最后更新时间';
+
+CREATE INDEX idx_cmn_unauth_api_external ON public.cmn_unauth_api (is_external);
+CREATE INDEX idx_cmn_unauth_api_edit_time ON public.cmn_unauth_api (edit_time DESC);
 
 -- 角色-按钮授权表：角色权限粒度落在按钮（不直接授权 API）
 CREATE TABLE public.cmn_role_button (
