@@ -23,6 +23,7 @@ import org.peach.common.mybatis.lambda.LambdaUpdate;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.MenuService;
+import org.peach.common.service.notify.RolePermChangeNotifier;
 import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.TreeUtil;
 import org.peach.common.vo.ButtonApiVO;
@@ -54,13 +55,16 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 	private final ButtonMapper buttonMapper;
 
+	private final RolePermChangeNotifier rolePermChangeNotifier;
+
 	protected MenuServiceImpl(MenuMapper mapper, MenuButtonMapper menuButtonMapper, ButtonApiMapper buttonApiMapper,
-		RoleButtonMapper roleButtonMapper, ButtonMapper buttonMapper) {
+		RoleButtonMapper roleButtonMapper, ButtonMapper buttonMapper, RolePermChangeNotifier rolePermChangeNotifier) {
 		super(mapper, Menu.class, MenuVO.class);
 		this.menuButtonMapper = menuButtonMapper;
 		this.buttonApiMapper = buttonApiMapper;
 		this.roleButtonMapper = roleButtonMapper;
 		this.buttonMapper = buttonMapper;
+		this.rolePermChangeNotifier = rolePermChangeNotifier;
 	}
 
 	@Override
@@ -75,6 +79,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 		// menuButtons 为 null 表示仅更新菜单主表，不触碰按钮与 API 绑定（与 POST /menu 文档约定一致）
 		if (menuInfoVO.getMenuButtons() == null) {
+			rolePermChangeNotifier.afterChange();
 			return;
 		}
 
@@ -105,6 +110,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		if (!CollectionUtils.isEmpty(buttonApis)) {
 			this.buttonApiMapper.batchInsertBase(buttonApis);
 		}
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override
@@ -131,6 +137,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		this.buttonApiMapper.deleteByLambda(LambdaDelete.of(ButtonApi.class).eq(ButtonApi::getMenuId, menuId));
 		// 删除该菜单角色绑定
 		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getMenuId, menuId));
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override
@@ -191,7 +198,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		BeanUtil.copyProperties(button, menuButton);
 		menuButton.setMenuId(menuVO.getId());
 		this.menuButtonMapper.insertBase(menuButton);
-
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override
@@ -211,6 +218,7 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 		this.buttonApiMapper.deleteByLambda(LambdaDelete.of(ButtonApi.class).eq(ButtonApi::getMenuId, menuId));
 		// 删除该菜单角色绑定
 		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getMenuId, menuId));
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override

@@ -27,6 +27,7 @@ import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.RoleService;
+import org.peach.common.service.notify.RolePermChangeNotifier;
 import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.TreeUtil;
 import org.peach.common.utils.UserContext;
@@ -61,13 +62,18 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 	private final MenuButtonMapper menuButtonMapper;
 	private final ButtonMapper buttonMapper;
 
+	private final RolePermChangeNotifier rolePermChangeNotifier;
+
 	@Override
 	public Serializable save(RoleVO vo) {
-		return this.mapper.saveOrUpdate(BeanUtil.copy(vo, Role.class));
+		Serializable id = this.mapper.saveOrUpdate(BeanUtil.copy(vo, Role.class));
+		rolePermChangeNotifier.afterChange();
+		return id;
 	}
 
 	public RoleServiceImpl(RoleMapper mapper, RoleUserMapper roleUserMapper, RoleButtonMapper roleButtonMapper,
-		UserMapper userMapper, MenuMapper menuMapper, MenuButtonMapper menuButtonMapper, ButtonMapper buttonMapper) {
+		UserMapper userMapper, MenuMapper menuMapper, MenuButtonMapper menuButtonMapper, ButtonMapper buttonMapper,
+		RolePermChangeNotifier rolePermChangeNotifier) {
 		super(mapper, Role.class, RoleVO.class);
 		this.roleUserMapper = roleUserMapper;
 		this.roleButtonMapper = roleButtonMapper;
@@ -75,6 +81,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 		this.menuMapper = menuMapper;
 		this.menuButtonMapper = menuButtonMapper;
 		this.buttonMapper = buttonMapper;
+		this.rolePermChangeNotifier = rolePermChangeNotifier;
 	}
 
 	@Override
@@ -84,6 +91,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 		this.mapper.deleteBaseByKey(id, Role.class);
 		this.roleUserMapper.deleteByLambda(LambdaDelete.of(RoleUser.class).eq(RoleUser::getRoleId, id));
 		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getRoleId, id));
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override
@@ -107,6 +115,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 		if (!CollectionUtils.isEmpty(users)) {
 			this.roleUserMapper.batchInsertBase(BeanUtil.copyList(users, RoleUser.class));
 		}
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override
@@ -172,6 +181,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 		// 先删后插：空列表仅删除，表示清空该角色全部菜单按钮授权
 		this.roleButtonMapper.deleteByLambda(LambdaDelete.of(RoleButton.class).eq(RoleButton::getRoleId, roleId));
 		if (CollectionUtils.isEmpty(menuButtonRoleVOs)) {
+			rolePermChangeNotifier.afterChange();
 			return;
 		}
 		List<MenuButtonRoleVO> granted = menuButtonRoleVOs.stream()
@@ -181,6 +191,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 		if (!CollectionUtils.isEmpty(granted)) {
 			this.roleButtonMapper.batchInsertBase(BeanUtil.copyList(granted, RoleButton.class));
 		}
+		rolePermChangeNotifier.afterChange();
 	}
 
 	@Override

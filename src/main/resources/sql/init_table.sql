@@ -359,7 +359,7 @@ CREATE INDEX idx_cmn_button_api_service_name ON public.cmn_button_api (service_n
 CREATE INDEX idx_cmn_button_api_valid ON public.cmn_button_api (valid);
 CREATE INDEX idx_cmn_button_api_edit_time ON public.cmn_button_api (edit_time DESC);
 
--- 网关 JWT 免鉴权 API：final_path 为经网关的最终 Ant 路径（入库前拼好，网关不再拼接）
+-- 网关 JWT 免鉴权 API：final_path 为客户端请求原始 Ant 路径（WhitelistFilter 直接匹配；入库前拼好）
 CREATE TABLE public.cmn_unauth_api (
     id                 BIGINT         NOT NULL,
     method             VARCHAR(8)     NOT NULL,
@@ -386,7 +386,7 @@ CREATE TABLE public.cmn_unauth_api (
 );
 
 COMMENT ON TABLE public.cmn_unauth_api IS
-    '网关 JWT 免鉴权 API；final_path 供 TokenGlobalFilter 直接 Ant 匹配；与代码内置名单合并';
+    '网关 JWT 免鉴权 API；final_path 供 WhitelistFilter 按原始请求路径 Ant 匹配；与代码内置名单合并';
 COMMENT ON COLUMN public.cmn_unauth_api.id IS '主键：短雪花 64 位，对应 Java long';
 COMMENT ON COLUMN public.cmn_unauth_api.method IS 'HTTP 方法（GET/POST 等），与下游接口一致；禁止 ALL';
 COMMENT ON COLUMN public.cmn_unauth_api.summary IS '接口摘要，对应 ApiMeta.summary';
@@ -395,9 +395,9 @@ COMMENT ON COLUMN public.cmn_unauth_api.url_path IS
 COMMENT ON COLUMN public.cmn_unauth_api.service_name IS
     '内部 API 的 Nacos serviceId（对应 ApiMeta.serviceName），如 peach-auth-service；外部 API 须为空';
 COMMENT ON COLUMN public.cmn_unauth_api.is_external IS
-    '是否外部 API：0=本体系微服务（保存时由 service_name+url_path 拼入 final_path）；1=体系外（final_path 为外部完整 path，service_name/url_path 为空）';
+    '是否外部 API：0=本体系微服务（保存时由 service_name+url_path 拼入 final_path）；1=体系外（final_path 按录入原样的完整 path，service_name/url_path 为空）';
 COMMENT ON COLUMN public.cmn_unauth_api.final_path IS
-    '最终 API 路径（Ant）：外部 API 填经网关的完整 path；内部 API 填 /{service_name}{url_path} 预拼接结果，网关不再拼接';
+    '最终 Ant 路径：内部 API 为 /{service_name}{url_path}（无 /peach-gateway 前缀）；外部 API 按录入原样；WhitelistFilter 直接匹配';
 COMMENT ON COLUMN public.cmn_unauth_api.deletable IS
     '是否允许删除：0=禁止删除（登录、短信验证码等内置项）；1=允许删除';
 COMMENT ON COLUMN public.cmn_unauth_api.valid IS '是否启用免鉴权：1=参与 JWT 白名单 0=停用（非逻辑删除）';

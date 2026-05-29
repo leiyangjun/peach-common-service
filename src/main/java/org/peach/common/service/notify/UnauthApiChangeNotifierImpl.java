@@ -5,7 +5,6 @@ import java.util.List;
 import org.peach.common.entity.UnauthApi;
 import org.peach.common.mapper.UnauthApiMapper;
 import org.peach.common.mvc.redis.RedisAccessor;
-import org.peach.common.mvc.redis.RedisMessagePublisher;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.utils.BeanUtil;
 import org.springframework.stereotype.Component;
@@ -15,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * 免鉴权 API 变更后：全量重建 Redis 快照并 Pub/Sub 通知网关刷新本地缓存。
  * <p>
  * 平台约定：{@link RedisAccessor#increment} revision → {@link RedisAccessor#setValue} 全量快照 →
- * {@link RedisMessagePublisher#publish} 对象 revision 通知下游拉快照（与 start JavaDoc 方式二一致）。
+ * {@link RedisAccessor#publish} 纯文本 revision 通知下游拉快照。
  * </p>
  */
 @Slf4j
@@ -32,13 +31,9 @@ public class UnauthApiChangeNotifierImpl implements UnauthApiChangeNotifier {
 
 	private final RedisAccessor redisAccessor;
 
-	private final RedisMessagePublisher messagePublisher;
-
-	public UnauthApiChangeNotifierImpl(UnauthApiMapper mapper, RedisAccessor redisAccessor,
-			RedisMessagePublisher messagePublisher) {
+	public UnauthApiChangeNotifierImpl(UnauthApiMapper mapper, RedisAccessor redisAccessor) {
 		this.mapper = mapper;
 		this.redisAccessor = redisAccessor;
-		this.messagePublisher = messagePublisher;
 	}
 
 	@Override
@@ -50,7 +45,7 @@ public class UnauthApiChangeNotifierImpl implements UnauthApiChangeNotifier {
 			long rev = revision == null ? 0L : revision;
 			UnauthApiSnapshot snapshot = new UnauthApiSnapshot(rev, Instant.now().toString(), List.copyOf(items));
 			redisAccessor.setValue(BIZ_SNAPSHOT, snapshot);
-			messagePublisher.publish(BIZ_SNAPSHOT, rev);
+			redisAccessor.publish(BIZ_REVISION, Long.toString(rev));
 			log.info("免鉴权 API 快照已发布 revision={} items={} redisKey={}", rev, items.size(), BIZ_SNAPSHOT);
 		}
 		catch (Exception ex) {

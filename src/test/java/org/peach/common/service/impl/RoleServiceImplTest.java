@@ -28,6 +28,7 @@ import org.peach.common.mapper.RoleButtonMapper;
 import org.peach.common.mapper.RoleMapper;
 import org.peach.common.mapper.RoleUserMapper;
 import org.peach.common.mapper.UserMapper;
+import org.peach.common.service.notify.RolePermChangeNotifier;
 import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.utils.UserContext;
@@ -68,6 +69,9 @@ class RoleServiceImplTest {
 
 	@Mock
 	private ButtonMapper buttonMapper;
+
+	@Mock
+	private RolePermChangeNotifier rolePermChangeNotifier;
 
 	@InjectMocks
 	private RoleServiceImpl roleService;
