@@ -1,6 +1,6 @@
 package org.peach.common.config;
 
-import org.peach.common.service.notify.UnauthApiChangeNotifierImpl;
+import org.peach.common.service.notify.UnauthApiChangeNotifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 public class UnauthApiNotifierConfiguration {
 
 	@Bean
-	ApplicationRunner unauthApiStartupSync(UnauthApiChangeNotifierImpl notifier) {
-		return args -> notifier.rebuildAndPublish();
+	ApplicationRunner unauthApiStartupSync(UnauthApiChangeNotifier notifier) {
+		return args -> notifier.afterChange();
 	}
 }
