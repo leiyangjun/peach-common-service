@@ -6,16 +6,16 @@ package org.peach.common.service.notify;
  * @author leiyangjun
  * @date 2026-05-29
  */
-public class RolePermApiItem {
+public class RoleApiItem {
 
 	private String method;
 
 	private String finalPath;
 
-	public RolePermApiItem() {
+	public RoleApiItem() {
 	}
 
-	public RolePermApiItem(String method, String finalPath) {
+	public RoleApiItem(String method, String finalPath) {
 		this.method = method;
 		this.finalPath = finalPath;
 	}

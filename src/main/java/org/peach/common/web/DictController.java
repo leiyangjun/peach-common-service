@@ -50,11 +50,15 @@ public class DictController {
 		description = "查询参数见 DictPageQuery：searchValue（类型/标签/存储值 OR 模糊）、listStatusFlag（null=全部，0=停用，1=启用）")
 	@GetMapping("/page")
 	public ApiResult<PageInfo<DictVO>> page(@RequestParam(name = "status", required = false) Short status,
-		@ModelAttribute SearchVO search, PageVO page, SortVO sort) {
+		@ModelAttribute SearchVO search, @RequestParam(defaultValue = "1") int pageNum,
+		@RequestParam(defaultValue = "10") int pageSize, @ModelAttribute SortVO sort) {
 		DictVO dictVO = new DictVO();
 		if (status != null) {
 			dictVO.setStatus(status);
 		}
+		PageVO page = new PageVO();
+		page.setPageNum(pageNum);
+		page.setPageSize(pageSize);
 		return ApiResult.ok(service.listPage(dictVO, search, page, sort));
 	}
 

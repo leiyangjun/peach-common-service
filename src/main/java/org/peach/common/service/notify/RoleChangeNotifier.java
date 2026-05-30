@@ -6,7 +6,7 @@ package org.peach.common.service.notify;
  * @author leiyangjun
  * @date 2026-05-29
  */
-public interface RolePermChangeNotifier {
+public interface RoleChangeNotifier {
 
 	void afterChange();
 }

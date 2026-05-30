@@ -43,6 +43,11 @@ public class UnauthApiVO implements Serializable {
 	@Schema(description = "0=内部微服务 1=外部")
 	private Short isExternal;
 
+	@Min(1)
+	@Max(2)
+	@Schema(description = "访问类型：1=免登录白名单 2=需登录免权限校验；分页可作等值筛选")
+	private Short accessType;
+
 	@Size(max = 256, message = "最终路径长度不能超过 256")
 	@Schema(description = "网关 Ant 最终路径；内部 API 可由服务端拼接")
 	private String finalPath;

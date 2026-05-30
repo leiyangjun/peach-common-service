@@ -33,7 +33,7 @@ import org.springframework.util.StringUtils;
  * @date 2026-05-29
  */
 @Component
-public class RolePermSnapshotBuilder {
+public class RoleSnapshotBuilder {
 
 	private final RoleMapper roleMapper;
 
@@ -43,7 +43,7 @@ public class RolePermSnapshotBuilder {
 
 	private final ButtonApiMapper buttonApiMapper;
 
-	public RolePermSnapshotBuilder(RoleMapper roleMapper, RoleUserMapper roleUserMapper,
+	public RoleSnapshotBuilder(RoleMapper roleMapper, RoleUserMapper roleUserMapper,
 			RoleButtonMapper roleButtonMapper, ButtonApiMapper buttonApiMapper) {
 		this.roleMapper = roleMapper;
 		this.roleUserMapper = roleUserMapper;
@@ -74,7 +74,7 @@ public class RolePermSnapshotBuilder {
 	/**
 	 * 构建 roleCode → 物化 API 列表（role→button→button_api，按 method+finalPath 去重）。
 	 */
-	public Map<String, List<RolePermApiItem>> buildRoleApis() {
+	public Map<String, List<RoleApiItem>> buildRoleApis() {
 		Map<Long, String> roleIdToCode = loadValidRoleIdToCode();
 		if (roleIdToCode.isEmpty()) {
 			return Map.of();
@@ -87,7 +87,7 @@ public class RolePermSnapshotBuilder {
 				.collect(Collectors.groupingBy(ba -> menuButtonKey(ba.getMenuId(), ba.getButtonId())));
 
 		Map<String, Set<String>> dedupeKeys = new HashMap<>();
-		Map<String, List<RolePermApiItem>> result = new LinkedHashMap<>();
+		Map<String, List<RoleApiItem>> result = new LinkedHashMap<>();
 		for (RoleButton rb : roleButtons) {
 			String roleCode = roleIdToCode.get(rb.getRoleId());
 			if (roleCode == null) {
@@ -96,7 +96,7 @@ public class RolePermSnapshotBuilder {
 			List<ButtonApi> apis = apisByMenuButton
 					.getOrDefault(menuButtonKey(rb.getMenuId(), rb.getButtonId()), List.of());
 			for (ButtonApi api : apis) {
-				RolePermApiItem item = toApiItem(api);
+				RoleApiItem item = toApiItem(api);
 				if (item == null) {
 					continue;
 				}
@@ -118,12 +118,12 @@ public class RolePermSnapshotBuilder {
 				.collect(Collectors.toMap(Role::getId, Role::getRoleCode, (a, b) -> a, LinkedHashMap::new));
 	}
 
-	private static RolePermApiItem toApiItem(ButtonApi api) {
+	private static RoleApiItem toApiItem(ButtonApi api) {
 		String finalPath = toFinalPath(api.getServiceName(), api.getUrlPath());
 		if (finalPath == null || !StringUtils.hasText(api.getMethod())) {
 			return null;
 		}
-		return new RolePermApiItem(api.getMethod().trim().toUpperCase(), finalPath);
+		return new RoleApiItem(api.getMethod().trim().toUpperCase(), finalPath);
 	}
 
 	/**

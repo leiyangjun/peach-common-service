@@ -26,7 +26,7 @@ import org.peach.common.mapper.ButtonMapper;
 import org.peach.common.mapper.MenuButtonMapper;
 import org.peach.common.mapper.MenuMapper;
 import org.peach.common.mapper.RoleButtonMapper;
-import org.peach.common.service.notify.RolePermChangeNotifier;
+import org.peach.common.service.notify.RoleChangeNotifier;
 import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.mybatis.lambda.LambdaUpdate;
@@ -62,7 +62,7 @@ class MenuServiceImplTest {
 	private ButtonMapper buttonMapper;
 
 	@Mock
-	private RolePermChangeNotifier rolePermChangeNotifier;
+	private RoleChangeNotifier rolePermChangeNotifier;
 
 	@InjectMocks
 	private MenuServiceImpl menuService;

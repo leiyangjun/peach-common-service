@@ -27,7 +27,7 @@ import org.peach.common.mybatis.lambda.LambdaDelete;
 import org.peach.common.mybatis.lambda.LambdaSelect;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.RoleService;
-import org.peach.common.service.notify.RolePermChangeNotifier;
+import org.peach.common.service.notify.RoleChangeNotifier;
 import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.TreeUtil;
 import org.peach.common.utils.UserContext;
@@ -62,7 +62,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 	private final MenuButtonMapper menuButtonMapper;
 	private final ButtonMapper buttonMapper;
 
-	private final RolePermChangeNotifier rolePermChangeNotifier;
+	private final RoleChangeNotifier rolePermChangeNotifier;
 
 	@Override
 	public Serializable save(RoleVO vo) {
@@ -73,7 +73,7 @@ public class RoleServiceImpl extends BaseAbstractService<RoleMapper, Role, RoleV
 
 	public RoleServiceImpl(RoleMapper mapper, RoleUserMapper roleUserMapper, RoleButtonMapper roleButtonMapper,
 		UserMapper userMapper, MenuMapper menuMapper, MenuButtonMapper menuButtonMapper, ButtonMapper buttonMapper,
-		RolePermChangeNotifier rolePermChangeNotifier) {
+		RoleChangeNotifier rolePermChangeNotifier) {
 		super(mapper, Role.class, RoleVO.class);
 		this.roleUserMapper = roleUserMapper;
 		this.roleButtonMapper = roleButtonMapper;

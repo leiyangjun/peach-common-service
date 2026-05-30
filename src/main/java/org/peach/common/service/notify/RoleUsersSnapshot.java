@@ -9,7 +9,7 @@ import java.util.Map;
  * @author leiyangjun
  * @date 2026-05-29
  */
-public class RolePermUsersSnapshot {
+public class RoleUsersSnapshot {
 
 	private long revision;
 
@@ -18,10 +18,10 @@ public class RolePermUsersSnapshot {
 	/** roleCode → userId 列表 */
 	private Map<String, List<Long>> roles;
 
-	public RolePermUsersSnapshot() {
+	public RoleUsersSnapshot() {
 	}
 
-	public RolePermUsersSnapshot(long revision, String updatedAt, Map<String, List<Long>> roles) {
+	public RoleUsersSnapshot(long revision, String updatedAt, Map<String, List<Long>> roles) {
 		this.revision = revision;
 		this.updatedAt = updatedAt;
 		this.roles = roles;

@@ -23,7 +23,7 @@ import org.peach.common.mybatis.lambda.LambdaUpdate;
 import org.peach.common.mybatis.model.vo.SortVO;
 import org.peach.common.mybatis.service.BaseAbstractService;
 import org.peach.common.service.MenuService;
-import org.peach.common.service.notify.RolePermChangeNotifier;
+import org.peach.common.service.notify.RoleChangeNotifier;
 import org.peach.common.utils.BeanUtil;
 import org.peach.common.utils.TreeUtil;
 import org.peach.common.vo.ButtonApiVO;
@@ -55,10 +55,10 @@ public class MenuServiceImpl extends BaseAbstractService<MenuMapper, Menu, MenuV
 
 	private final ButtonMapper buttonMapper;
 
-	private final RolePermChangeNotifier rolePermChangeNotifier;
+	private final RoleChangeNotifier rolePermChangeNotifier;
 
 	protected MenuServiceImpl(MenuMapper mapper, MenuButtonMapper menuButtonMapper, ButtonApiMapper buttonApiMapper,
-		RoleButtonMapper roleButtonMapper, ButtonMapper buttonMapper, RolePermChangeNotifier rolePermChangeNotifier) {
+		RoleButtonMapper roleButtonMapper, ButtonMapper buttonMapper, RoleChangeNotifier rolePermChangeNotifier) {
 		super(mapper, Menu.class, MenuVO.class);
 		this.menuButtonMapper = menuButtonMapper;
 		this.buttonApiMapper = buttonApiMapper;

@@ -20,7 +20,7 @@ import org.peach.common.mapper.RoleMapper;
 import org.peach.common.mapper.RoleUserMapper;
 
 /**
- * {@link RolePermSnapshotBuilder} 物化逻辑单测。
+ * {@link RoleSnapshotBuilder} 物化逻辑单测。
  *
  * @author leiyangjun
  * @date 2026-05-29
@@ -40,11 +40,11 @@ class RolePermSnapshotBuilderTest {
 	@Mock
 	private ButtonApiMapper buttonApiMapper;
 
-	private RolePermSnapshotBuilder builder;
+	private RoleSnapshotBuilder builder;
 
 	@BeforeEach
 	void setUp() {
-		builder = new RolePermSnapshotBuilder(roleMapper, roleUserMapper, roleButtonMapper, buttonApiMapper);
+		builder = new RoleSnapshotBuilder(roleMapper, roleUserMapper, roleButtonMapper, buttonApiMapper);
 	}
 
 	@Test
@@ -91,7 +91,7 @@ class RolePermSnapshotBuilderTest {
 		var result = builder.buildRoleApis();
 		assertThat(result).containsKey("ROLE_OPS");
 		assertThat(result.get("ROLE_OPS")).hasSize(1);
-		RolePermApiItem item = result.get("ROLE_OPS").get(0);
+		RoleApiItem item = result.get("ROLE_OPS").get(0);
 		assertThat(item.getMethod()).isEqualTo("POST");
 		assertThat(item.getFinalPath()).isEqualTo("/peach-common-service/admin/user/list");
 	}

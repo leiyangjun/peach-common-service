@@ -1,6 +1,6 @@
 package org.peach.common.config;
 
-import org.peach.common.service.notify.RolePermChangeNotifier;
+import org.peach.common.service.notify.RoleChangeNotifier;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Configuration;
 public class RolePermNotifierConfiguration {
 
 	@Bean
-	ApplicationRunner rolePermStartupSync(RolePermChangeNotifier notifier) {
+	ApplicationRunner rolePermStartupSync(RoleChangeNotifier notifier) {
 		return args -> notifier.afterChange();
 	}
 }

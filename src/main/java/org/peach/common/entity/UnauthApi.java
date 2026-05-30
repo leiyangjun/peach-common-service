@@ -36,6 +36,9 @@ public class UnauthApi implements Serializable {
 
 	private Short isExternal;
 
+	/** 访问类型：1=免登录白名单 2=需登录免权限校验 */
+	private Short accessType;
+
 	@Unique
 	@SearchValue
 	private String finalPath;

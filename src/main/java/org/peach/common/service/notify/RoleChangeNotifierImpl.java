@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-public class RolePermChangeNotifierImpl implements RolePermChangeNotifier {
+public class RoleChangeNotifierImpl implements RoleChangeNotifier {
 
 	/** 角色-用户快照；经 RedisAccessor 写入后为 COMM-{profile}-ROLE_USERS */
 	private static final String BIZ_ROLE_USERS = "ROLE_USERS";
@@ -34,13 +34,13 @@ public class RolePermChangeNotifierImpl implements RolePermChangeNotifier {
 	/** 角色-API revision；经 RedisAccessor 写入后为 COMM-{profile}-ROLE_APIS_VERSION */
 	private static final String BIZ_ROLE_APIS_VERSION = "ROLE_APIS_VERSION";
 
-	private final RolePermSnapshotBuilder snapshotBuilder;
+	private final RoleSnapshotBuilder snapshotBuilder;
 
 	private final RedisAccessor redisAccessor;
 
 	private final RedisMessagePublisher messagePublisher;
 
-	public RolePermChangeNotifierImpl(RolePermSnapshotBuilder snapshotBuilder, RedisAccessor redisAccessor,
+	public RoleChangeNotifierImpl(RoleSnapshotBuilder snapshotBuilder, RedisAccessor redisAccessor,
 			RedisMessagePublisher messagePublisher) {
 		this.snapshotBuilder = snapshotBuilder;
 		this.redisAccessor = redisAccessor;
@@ -63,17 +63,17 @@ public class RolePermChangeNotifierImpl implements RolePermChangeNotifier {
 		Map<String, List<Long>> roles = snapshotBuilder.buildRoleUsers();
 		Long revision = redisAccessor.increment(BIZ_ROLE_USERS_VERSION);
 		long rev = revision == null ? 0L : revision;
-		RolePermUsersSnapshot snapshot = new RolePermUsersSnapshot(rev, updatedAt, Map.copyOf(roles));
+		RoleUsersSnapshot snapshot = new RoleUsersSnapshot(rev, updatedAt, Map.copyOf(roles));
 		redisAccessor.setValue(BIZ_ROLE_USERS, snapshot);
 		messagePublisher.publish(BIZ_ROLE_USERS, rev);
 		log.info("角色-用户快照已发布 revision={} roles={} redisKey={}", rev, roles.size(), BIZ_ROLE_USERS);
 	}
 
 	private void publishApisSnapshot(String updatedAt) {
-		Map<String, List<RolePermApiItem>> roles = snapshotBuilder.buildRoleApis();
+		Map<String, List<RoleApiItem>> roles = snapshotBuilder.buildRoleApis();
 		Long revision = redisAccessor.increment(BIZ_ROLE_APIS_VERSION);
 		long rev = revision == null ? 0L : revision;
-		RolePermApisSnapshot snapshot = new RolePermApisSnapshot(rev, updatedAt, Map.copyOf(roles));
+		RoleApisSnapshot snapshot = new RoleApisSnapshot(rev, updatedAt, Map.copyOf(roles));
 		redisAccessor.setValue(BIZ_ROLE_APIS, snapshot);
 		messagePublisher.publish(BIZ_ROLE_APIS, rev);
 		int apiCount = roles.values().stream().mapToInt(List::size).sum();

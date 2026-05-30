@@ -9,19 +9,19 @@ import java.util.Map;
  * @author leiyangjun
  * @date 2026-05-29
  */
-public class RolePermApisSnapshot {
+public class RoleApisSnapshot {
 
 	private long revision;
 
 	private String updatedAt;
 
 	/** roleCode → API 列表（method + finalPath） */
-	private Map<String, List<RolePermApiItem>> roles;
+	private Map<String, List<RoleApiItem>> roles;
 
-	public RolePermApisSnapshot() {
+	public RoleApisSnapshot() {
 	}
 
-	public RolePermApisSnapshot(long revision, String updatedAt, Map<String, List<RolePermApiItem>> roles) {
+	public RoleApisSnapshot(long revision, String updatedAt, Map<String, List<RoleApiItem>> roles) {
 		this.revision = revision;
 		this.updatedAt = updatedAt;
 		this.roles = roles;
@@ -43,11 +43,11 @@ public class RolePermApisSnapshot {
 		this.updatedAt = updatedAt;
 	}
 
-	public Map<String, List<RolePermApiItem>> getRoles() {
+	public Map<String, List<RoleApiItem>> getRoles() {
 		return roles;
 	}
 
-	public void setRoles(Map<String, List<RolePermApiItem>> roles) {
+	public void setRoles(Map<String, List<RoleApiItem>> roles) {
 		this.roles = roles;
 	}
 }
