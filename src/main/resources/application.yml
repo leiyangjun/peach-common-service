@@ -9,14 +9,14 @@ spring:
     active: dev
   data:
     redis:
-      host: ${REDIS_HOST:192.168.99.100}
+      host: ${REDIS_HOST:127.0.0.1}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:redis}
       database: ${REDIS_DATABASE:0}
       timeout: 3s
   cloud:
     nacos:
-      server-addr: ${NACOS_SERVER_ADDR:192.168.99.100:8848}
+      server-addr: ${NACOS_SERVER_ADDR:127.0.0.1:8848}
       username: ${NACOS_USERNAME:nacos}
       password: ${NACOS_PASSWORD:nacos}
 
